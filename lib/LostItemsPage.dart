@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:lostandfound/LostItemDetailsPage.dart'; // Import your LostItemDetailsPage widget here
-import 'AddPostPage.dart';
+import 'package:simple_speed_dial/simple_speed_dial.dart';
+import 'AddFoundItemPage.dart'; // Import your AddFoundItemPage widget here
+import 'AddLostItemPage.dart'; // Import your AddLostItemPage widget here
+import 'package:lostandfound/FoundItemDetailsPage.dart';
+import 'package:lostandfound/LostItemDetailsPage.dart';
 
 class LostItemsPage extends StatelessWidget {
   @override
@@ -14,6 +17,7 @@ class LostItemsPage extends StatelessWidget {
         itemBuilder: (context, index) {
           return GestureDetector(
             onTap: () {
+              // Navigate to LostItemDetailsPage
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => LostItemDetailsPage()),
@@ -53,14 +57,34 @@ class LostItemsPage extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddPostPage()), // Navigate to AddPostPage
-          );
-        },
-        child: Icon(Icons.add),
+      floatingActionButton: SpeedDial(
+        child: const Icon(Icons.add),
+        speedDialChildren: <SpeedDialChild>[
+          SpeedDialChild(
+            child: const Icon(Icons.add),
+            label: 'Add Item Found',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddFoundItemPage()), // Navigate to AddFoundItemPage
+              );
+            },
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.remove), // Change the icon to minus
+            label: 'Add Item Lost',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddLostItemPage()), // Navigate to AddLostItemPage
+              );
+            },
+          ),
+        ],
+        closedForegroundColor: Colors.black,
+        openForegroundColor: Colors.white,
+        closedBackgroundColor: Colors.white,
+        openBackgroundColor: Colors.black,
       ),
     );
   }

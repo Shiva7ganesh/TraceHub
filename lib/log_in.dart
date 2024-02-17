@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'MyHomePage.dart';
 import 'log_in.dart';
 
@@ -27,7 +28,7 @@ class _LoginDemoState extends State<LoginDemo> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("CMRIT Lost and Found"),
+        title: Text("GeeksforGeeks"),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -41,7 +42,7 @@ class _LoginDemoState extends State<LoginDemo> {
                     /*decoration: BoxDecoration(
 						color: Colors.red,
 						borderRadius: BorderRadius.circular(50.0)),*/
-                    ),
+                    child: Image.asset('images/lost.png')),
               ),
             ),
             Padding(

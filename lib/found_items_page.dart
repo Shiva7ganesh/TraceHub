@@ -1,65 +1,51 @@
 import 'package:flutter/material.dart';
-import 'found_item_details_page.dart'; // Import your FoundItemDetailsPage widget here
-import 'AddPostPage.dart';
+import 'package:lostandfound/found_item_details_page.dart'; // Import your FoundItemDetailsPage widget here
+
 class FoundItemsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Found Items'), // Update the title here
+        title: const Text('Found Items'),
       ),
       body: ListView.builder(
         itemCount: 10, // Change this to the actual number of found items
         itemBuilder: (context, index) {
           return GestureDetector(
             onTap: () {
+              // Navigate to detailed view of the selected found item
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FoundItemDetailsPage()),
+                MaterialPageRoute(builder: (context) => FoundItemDetailsPage(itemIndex: index)),
               );
             },
             child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Container(
-                      width: double.infinity,
-                      height: 200, // Increase the image size here
-                      child: AspectRatio(
-                        aspectRatio: 1, // Square image
-                        child: Container(
-                          color: Colors.grey, // Replace with your image widget or network image
-                          // child: Image.asset('assets/image_placeholder.jpg', fit: BoxFit.cover),
-                        ),
-                      ),
+              elevation: 3.0,
+              margin: EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Placeholder(), // Placeholder for image
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Found Item ${index + 1}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 16.0),
-                    Text(
-                      'Found Item ${index + 1}', // Update the text here
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      'Description of found item ${index + 1}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 8.0),
-                    Text(
-                      'Description of found item ${index + 1}', // Update the text here
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
         },
-      ),
-        floatingActionButton: FloatingActionButton(
-        onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AddPostPage()), // Navigate to AddPostPage
-      );
-      },
-        child: Icon(Icons.add),
       ),
     );
   }

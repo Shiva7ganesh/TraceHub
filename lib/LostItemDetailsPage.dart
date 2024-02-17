@@ -5,9 +5,9 @@ class LostItemDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lost Item Details'),
+        title: const Text('Lost Item Details'),
       ),
-      body: Center(
+      body: const Center(
         child: Text('Detailed view of the selected lost item'),
       ),
     );

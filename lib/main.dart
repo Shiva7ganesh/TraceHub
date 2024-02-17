@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lostandfound/MyHomePage.dart'; // Import your HomePage widget here
+import 'package:lostandfound/MyHomePage.dart';
+import 'package:lostandfound/log_in.dart'; // Import your HomePage widget here
 
 void main() {
   runApp(MyApp());
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(), // Set your HomePage as the home screen
+      home: LoginDemo(), // Set your HomePage as the home screen
     );
   }
 }

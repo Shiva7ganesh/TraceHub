@@ -30,7 +30,9 @@ class FoundItemDetailsPage extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Item Name',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+                style: TextStyle(fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue),
               ),
             ),
             SizedBox(height: 10),
@@ -44,7 +46,8 @@ class FoundItemDetailsPage extends StatelessWidget {
                     children: [
                       Text(
                         'Description: ',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -67,7 +70,8 @@ class FoundItemDetailsPage extends StatelessWidget {
                     children: [
                       Text(
                         'Place Found: ',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -90,7 +94,8 @@ class FoundItemDetailsPage extends StatelessWidget {
                     children: [
                       Text(
                         'Contact Information: ',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),

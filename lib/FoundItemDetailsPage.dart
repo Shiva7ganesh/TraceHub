@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class LostItemDetailsPage extends StatelessWidget {
+class FoundItemDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lost Item Details'),
+        title: Text('Found Item Details'),
       ),
       body: SingleChildScrollView(
         child: Column(

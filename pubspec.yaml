@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   simple_speed_dial: ^0.1.7
+  google_fonts: ^2.2.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -43,6 +44,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   image_picker: ^0.8.3
+  google_fonts: ^2.2.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -56,6 +58,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/splash_image.png
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lostandfound/MyHomePage.dart'; // Import your HomePage widget here
+import 'package:lostandfound/SplashScreen.dart'; // Import your HomePage widget here
 
 void main() {
   runApp(MyApp());
@@ -13,8 +13,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(), // Set your HomePage as the home screen
+      home: SplashScreen(), // Set your HomePage as the home screen
     );
   }
 }
-

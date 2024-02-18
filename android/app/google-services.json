@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "263451860699",
+    "project_id": "lostfound-d58c9",
+    "storage_bucket": "lostfound-d58c9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:263451860699:android:2e845d4d58d21b477e36fe",
+        "android_client_info": {
+          "package_name": "com.example.lost"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "263451860699-eovcv71c7tdcof8hqhd959h8tpi0qtlu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lost",
+            "certificate_hash": "a6481a69165c8e5156344eff06ef8d390ed15a83"
+          }
+        },
+        {
+          "client_id": "263451860699-u50iltsdumoefj4h6mf160h9nhehdlga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lost",
+            "certificate_hash": "e4ce4b0a845a9fc21b29b1f42f9cd54bd747df84"
+          }
+        },
+        {
+          "client_id": "263451860699-rm1h3b4t7jck3dptmsjfriij4ihdsm1e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZJP3ff_6c012ggwMrJVzUQLG4FJpwVIg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "263451860699-4c4v6oa42tr2734rng4bitqj2518j4ah.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "263451860699-k2bu7qeit2nakj83c3fujo50q6ou0n8r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lost"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:263451860699:android:c99e1f89556381d37e36fe",
+        "android_client_info": {
+          "package_name": "com.example.lostandfound"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "263451860699-2tl7k50gvnkb271l44jcl584kgcc3kav.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lostandfound",
+            "certificate_hash": "a6481a69165c8e5156344eff06ef8d390ed15a83"
+          }
+        },
+        {
+          "client_id": "263451860699-rm1h3b4t7jck3dptmsjfriij4ihdsm1e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZJP3ff_6c012ggwMrJVzUQLG4FJpwVIg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "263451860699-4c4v6oa42tr2734rng4bitqj2518j4ah.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "263451860699-k2bu7qeit2nakj83c3fujo50q6ou0n8r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lost"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

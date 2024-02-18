@@ -10,7 +10,8 @@ class FoundItemsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Found Items'), // Update the title here
+        title: Text('Found Items'),
+          automaticallyImplyLeading: false// Update the title here
       ),
       body: ListView.builder(
         itemCount: 10, // Change this to the actual number of found items

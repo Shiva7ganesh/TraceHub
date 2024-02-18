@@ -10,7 +10,8 @@ class LostItemsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lost Items'), // Update the title here
+        title: Text('Lost Items'),
+          automaticallyImplyLeading: false// Update the title here
       ),
       body: ListView.builder(
         itemCount: 10, // Change this to the actual number of lost items

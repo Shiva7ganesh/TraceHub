@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'MyHomePage.dart';
 
 class AddLostItemPage extends StatefulWidget {
   @override
@@ -10,9 +14,11 @@ class AddLostItemPage extends StatefulWidget {
 class _AddLostItemPageState extends State<AddLostItemPage> {
   String itemName = '';
   String description = '';
-  String placeFound = '';
+  String placeLost = '';
   String contactInfo = '';
   List<File> _pickedImages = [];
+  bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>(); // Form key to manage form state
 
   // Function to handle adding an image
   Future<void> _addImage() async {
@@ -54,17 +60,135 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
         _pickedImages.add(File(pickedImage.path));
       });
     } catch (e) {
-      print('Error taking picture: $e');
+      print('Error taking a picture: $e');
     }
   }
 
   // Function to handle submitting the post
-  void _submitPost() {
-    // Implement logic to submit the post with provided details
-    // You can access the picked images from _pickedImages list
-    // and other form fields (itemName, description, placeFound, contactInfo)
-    // Use this data to upload to Firebase Storage or any other desired location.
-    // Example: _pickedImages.forEach((image) => uploadImage(image));
+  Future<void> _submitPost() async {
+    // Validate form
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true; // Set loading state to true when submitting
+    });
+
+    try {
+      // Upload images to Firebase Storage
+      List<String> imageUrls = await _uploadImages();
+
+      // Create a reference to the Firestore collection
+      CollectionReference lostItems =
+      FirebaseFirestore.instance.collection('lost_items');
+
+      // Add a new document with the provided data
+      await lostItems.add({
+        'itemName': itemName,
+        'description': description,
+        'placeLost': placeLost,
+        'contactInfo': contactInfo,
+        'images': imageUrls,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Clear form and imageUrls after successful submission
+      _clearForm();
+
+      // Show success message
+      // Show success popup
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Submitted Successfully'),
+            content:
+            Text('Your lost item has been submitted successfully.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  // Navigate to the home page
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MyHomePage(),
+                    ),
+                  );
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      print('Error submitting post: $e');
+      // Show error message if submission fails
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Failed to submit item. Please try again.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      setState(() {
+        _isLoading = false; // Set loading state to false after submission
+      });
+    }
+  }
+
+  // Function to upload images to Firebase Storage
+  Future<List<String>> _uploadImages() async {
+    List<String> imageUrls = [];
+
+    try {
+      for (File image in _pickedImages) {
+        // Generate a unique filename
+        String imageName = DateTime.now().millisecondsSinceEpoch.toString();
+
+        // Get the reference for the image to be stored
+        firebase_storage.Reference ref = firebase_storage
+            .FirebaseStorage.instance
+            .ref()
+            .child('images/$imageName');
+
+        // Upload the file to Firebase Storage
+        await ref.putFile(image);
+
+        // Get the download URL
+        String imageUrl = await ref.getDownloadURL();
+
+        // Add the URL to the list
+        imageUrls.add(imageUrl);
+      }
+    } catch (e) {
+      print('Error uploading images: $e');
+    }
+
+    return imageUrls;
+  }
+
+  // Function to clear the form and imageUrls
+  void _clearForm() {
+    setState(() {
+      itemName = '';
+      description = '';
+      placeLost = '';
+      contactInfo = '';
+      _pickedImages = [];
+    });
   }
 
   @override
@@ -75,99 +199,109 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            GestureDetector(
-              onTap: _addImage,
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                color: Colors.grey.withOpacity(0.5),
-                child: Center(
-                  child: _pickedImages.isNotEmpty
-                      ? ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _pickedImages.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: EdgeInsets.all(4.0),
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: FileImage(_pickedImages[index]),
-                            fit: BoxFit.cover,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GestureDetector(
+                onTap: _addImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 200,
+                  color: Colors.grey.withOpacity(0.5),
+                  child: Center(
+                    child: _pickedImages.isNotEmpty
+                        ? ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _pickedImages.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: EdgeInsets.all(4.0),
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: FileImage(_pickedImages[index]),
+                              fit: BoxFit.cover,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      );
-                    },
-                  )
-                      : Icon(
-                    Icons.add_photo_alternate,
-                    size: 48.0,
-                    color: Colors.white,
+                        );
+                      },
+                    )
+                        : Icon(
+                      Icons.add_photo_alternate,
+                      size: 48.0,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: 16.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: _addImage,
-                  child: Text('Add from Gallery'),
-                ),
-                ElevatedButton(
-                  onPressed: _takePicture,
-                  child: Text('Take a Picture'),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.0),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Item Name'),
-              onChanged: (value) {
-                setState(() {
-                  itemName = value;
-                });
-              },
-            ),
-            SizedBox(height: 16.0),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Description'),
-              onChanged: (value) {
-                setState(() {
-                  description = value;
-                });
-              },
-            ),
-            SizedBox(height: 16.0),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Place Found'),
-              onChanged: (value) {
-                setState(() {
-                  placeFound = value;
-                });
-              },
-            ),
-            SizedBox(height: 16.0),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Contact Information'),
-              onChanged: (value) {
-                setState(() {
-                  contactInfo = value;
-                });
-              },
-            ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _submitPost,
-              child: Text('Submit'),
-            ),
-          ],
+              SizedBox(height: 16.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: _addImage,
+                    child: Text('Add from Gallery'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _takePicture,
+                    child: Text('Take a Picture'),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Item Name'),
+                onChanged: (value) {
+                  setState(() {
+                    itemName = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Item name is required';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Description'),
+                onChanged: (value) {
+                  setState(() {
+                    description = value;
+                  });
+                },
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Place Lost'),
+                onChanged: (value) {
+                  setState(() {
+                    placeLost = value;
+                  });
+                },
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                decoration: InputDecoration(
+                    labelText: 'Contact Information (Optional)'),
+                onChanged: (value) {
+                  setState(() {
+                    contactInfo = value;
+                  });
+                },
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _submitPost,
+                child: _isLoading ? CircularProgressIndicator() : Text('Submit'),
+              ),
+            ],
+          ),
         ),
       ),
     );

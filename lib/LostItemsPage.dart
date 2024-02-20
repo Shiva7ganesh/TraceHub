@@ -38,7 +38,7 @@ class LostItemsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => LostItemDetailsPage()),
+                    MaterialPageRoute(builder: (context) => LostItemDetailsPage(item: item)),
                   );
                 },
                 child: Card(
@@ -47,11 +47,13 @@ class LostItemsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Container(
-                          width: double.infinity,
-                          height: 200,
-                          child: AspectRatio(
-                            aspectRatio: 16 / 9,
+                        AspectRatio(
+                          aspectRatio: 1, // Square aspect ratio
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.grey, // Change the color here
+                            ),
                             child: Stack(
                               children: [
                                 if (imageUrl != null)
@@ -59,11 +61,14 @@ class LostItemsPage extends StatelessWidget {
                                     imageUrl,
                                     fit: BoxFit.cover,
                                     loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) {
-                                        return child;
-                                      } else {
-                                        return Center(child: CircularProgressIndicator());
-                                      }
+                                      return AnimatedSwitcher(
+                                        duration: Duration(milliseconds: 300),
+                                        child: loadingProgress == null
+                                            ? child
+                                            : Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
                                     },
                                   ),
                                 if (imageUrl == null)
@@ -81,13 +86,20 @@ class LostItemsPage extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: 16.0),
-                        Text(
-                          itemName,
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        Row(
+                          children: [
+                            SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                itemName ?? '',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: 8.0),
                         Text(
-                          itemDescription,
+                          itemDescription ?? '',
                           style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       ],

@@ -1,8 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:insta_assets_picker/insta_assets_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_cropper/image_cropper.dart';
+// Import Insta Assets Picker
 
 import 'MyHomePage.dart';
 
@@ -20,70 +25,76 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>(); // Form key to manage form state
 
-  // Function to handle adding an image
   Future<void> _addImage() async {
-    final picker = ImagePicker();
-
     try {
-      // Pick multiple images from the gallery
-      List<XFile>? pickedImages = await picker.pickMultiImage();
+      final pickedAssets = await InstaAssetPicker.pickAssets(
+        context,
+        title: 'Select images',
+        maxAssets: 10,
+        onCompleted: (Stream<InstaAssetsExportDetails> stream) async {
+          await for (InstaAssetsExportDetails details in stream) {
+            setState(() {
+              _pickedImages.addAll(details.croppedFiles);
+            });
+          }
 
-      // If no images were picked, return
-      if (pickedImages == null || pickedImages.isEmpty) {
+          // Navigate back to the submit button page after selecting images
+          Navigator.pop(context);
+        },
+      );
+      if (pickedAssets == null || pickedAssets.isEmpty) {
         return;
       }
-
-      setState(() {
-        // Convert XFile to File and add to the list
-        _pickedImages.addAll(pickedImages.map((image) => File(image.path)));
-      });
     } catch (e) {
       print('Error picking images: $e');
     }
   }
 
-  // Function to handle taking a picture from the camera
   Future<void> _takePicture() async {
     final picker = ImagePicker();
 
     try {
-      // Take a picture from the camera
-      XFile? pickedImage = await picker.pickImage(source: ImageSource.camera);
-
-      // If no image was picked, return
+      final pickedImage = await picker.pickImage(source: ImageSource.camera);
       if (pickedImage == null) {
         return;
       }
 
-      setState(() {
-        // Convert XFile to File and add to the list
-        _pickedImages.add(File(pickedImage.path));
-      });
+      // Create an instance of ImageCropper
+      final imageCropper = ImageCropper();
+
+      // Crop the image
+      final croppedImage = await imageCropper.cropImage(
+        sourcePath: pickedImage.path,
+        aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+        compressQuality: 100,
+      );
+
+      if (croppedImage != null) {
+        setState(() {
+          _pickedImages.add(File(croppedImage.path));
+        });
+      }
     } catch (e) {
       print('Error taking a picture: $e');
     }
   }
 
-  // Function to handle submitting the post
+
+
   Future<void> _submitPost() async {
-    // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      _isLoading = true; // Set loading state to true when submitting
+      _isLoading = true;
     });
 
     try {
-      // Upload images to Firebase Storage
-      List<String> imageUrls = await _uploadImages();
+      final imageUrls = await _uploadImages();
 
-      // Create a reference to the Firestore collection
-      CollectionReference foundItems =
-      FirebaseFirestore.instance.collection('found_items');
+      final foundItems = FirebaseFirestore.instance.collection('found_items');
 
-      // Add a new document with the provided data
       await foundItems.add({
         'itemName': itemName,
         'description': description,
@@ -93,83 +104,63 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // Clear form and imageUrls after successful submission
       _clearForm();
 
-      // Show success message
-      // Show success popup
       showDialog(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Submitted Successfully'),
-            content: Text('Your found item has been submitted successfully.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  // Navigate to the home page
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MyHomePage(),
-                    ),
-                  );
-                },
-                child: Text('OK'),
+        builder: (BuildContext context) => AlertDialog(
+          title: Text('Submitted Successfully'),
+          content: Text('Your found item has been submitted successfully.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MyHomePage(),
+                ),
               ),
-            ],
-          );
-        },
+              child: Text('OK'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       print('Error submitting post: $e');
-      // Show error message if submission fails
       showDialog(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Error'),
-            content: Text('Failed to submit item. Please try again.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('Failed to submit item. Please try again.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        ),
       );
     } finally {
       setState(() {
-        _isLoading = false; // Set loading state to false after submission
+        _isLoading = false;
       });
     }
   }
 
-  // Function to upload images to Firebase Storage
   Future<List<String>> _uploadImages() async {
-    List<String> imageUrls = [];
+    final imageUrls = <String>[];
 
     try {
-      for (File image in _pickedImages) {
-        // Generate a unique filename
-        String imageName = DateTime.now().millisecondsSinceEpoch.toString();
+      for (final image in _pickedImages) {
+        final imageName = DateTime.now().millisecondsSinceEpoch.toString();
 
-        // Get the reference for the image to be stored
-        firebase_storage.Reference ref = firebase_storage
-            .FirebaseStorage.instance
+        final ref = firebase_storage.FirebaseStorage.instance
             .ref()
             .child('images/$imageName');
 
-        // Upload the file to Firebase Storage
         await ref.putFile(image);
 
-        // Get the download URL
-        String imageUrl = await ref.getDownloadURL();
+        final imageUrl = await ref.getDownloadURL();
 
-        // Add the URL to the list
         imageUrls.add(imageUrl);
       }
     } catch (e) {
@@ -179,14 +170,13 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
     return imageUrls;
   }
 
-  // Function to clear the form and imageUrls
   void _clearForm() {
     setState(() {
       itemName = '';
       description = '';
       placeFound = '';
       contactInfo = '';
-      _pickedImages = [];
+      _pickedImages.clear();
     });
   }
 
@@ -207,7 +197,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
                 onTap: _addImage,
                 child: Container(
                   width: double.infinity,
-                  height: 200,
+                  height: 300, // Increased height of the container
                   color: Colors.grey.withOpacity(0.5),
                   child: Center(
                     child: _pickedImages.isNotEmpty
@@ -217,14 +207,11 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
                       itemBuilder: (context, index) {
                         return Container(
                           margin: EdgeInsets.all(4.0),
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: FileImage(_pickedImages[index]),
-                              fit: BoxFit.cover,
-                            ),
-                            borderRadius: BorderRadius.circular(8.0),
+                          width: 300, // Set both width and height to maintain a square shape
+                          height: 300, // Set both width and height to maintain a square shape
+                          child: Image.file(
+                            _pickedImages[index],
+                            fit: BoxFit.cover,
                           ),
                         );
                       },

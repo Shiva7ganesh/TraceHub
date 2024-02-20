@@ -1,6 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class LostItemDetailsPage extends StatelessWidget {
+  final QueryDocumentSnapshot item;
+
+  const LostItemDetailsPage({Key? key, required this.item}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -11,30 +16,35 @@ class LostItemDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Item images (replace with your logic to display multiple images)
+            // Item images
             Container(
-              height: 200, // Adjust the height as needed
-              child: ListView(
+              height: 400, // Increase the image container height
+              color: Colors.grey, // Set container color to grey
+              child: item['images'] != null && item['images'].isNotEmpty
+                  ? ListView.separated(
                 scrollDirection: Axis.horizontal,
-                children: [
-                  Image.network('https://via.placeholder.com/150'),
-                  Image.network('https://via.placeholder.com/150'),
-                  Image.network('https://via.placeholder.com/150'),
-                  // Add more images here if needed
-                ],
+                itemCount: item['images'].length,
+                separatorBuilder: (context, index) => SizedBox(width: 10), // Add a small gap between the images
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 400, // Set both width and height to maintain a square shape
+                    height: 400, // Set both width and height to maintain a square shape
+                    child: Image.network(
+                      item['images'][index] as String,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              )
+                  : Center(
+                child: Text(
+                  'Image not available',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             SizedBox(height: 20),
             // Item name
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Item Name',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
-              ),
-            ),
-            SizedBox(height: 10),
-            // Description
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -43,14 +53,33 @@ class LostItemDetailsPage extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'Description: ',
+                        'Item Name: ',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        item['itemName'] ?? 'No Item Name',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            // Description
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Description: ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 5),
                   Text(
-                    'Detailed description of the found item goes here.',
+                    item['description'] ?? 'No Description',
                     style: TextStyle(fontSize: 18),
                   ),
                 ],
@@ -63,17 +92,13 @@ class LostItemDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Place Found: ',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  Text(
+                    'Place Lost: ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    'Location where the item was found.',
+                    item['placeLost'] ?? 'No Place Lost',
                     style: TextStyle(fontSize: 18),
                   ),
                 ],
@@ -86,17 +111,13 @@ class LostItemDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Contact Information: ',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  Text(
+                    'Contact Information: ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    'Phone number or email to contact if found.',
+                    item['contactInfo'] ?? 'No Contact Information',
                     style: TextStyle(fontSize: 18),
                   ),
                 ],

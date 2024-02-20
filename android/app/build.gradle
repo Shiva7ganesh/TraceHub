@@ -65,4 +65,8 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+
+dependencies {
+    implementation "com.github.yalantis:ucrop:2.2.6" // This is the UCrop library dependency
+    implementation 'com.android.support:multidex:1.0.3' // If multidex is needed
+}

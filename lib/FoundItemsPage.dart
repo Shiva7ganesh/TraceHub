@@ -40,7 +40,7 @@ class FoundItemsPage extends StatelessWidget {
                   // Navigate to FoundItemDetailsPage
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FoundItemDetailsPage()),
+                    MaterialPageRoute(builder: (context) => FoundItemDetailsPage(item: item)),
                   );
                 },
                 child: Card(
@@ -49,14 +49,13 @@ class FoundItemsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Container(
-                          width: double.infinity,
-                          height: 200, // Increase the image size here
-                          decoration: BoxDecoration(
-                            color: Colors.grey, // Change the color here
-                          ),
-                          child: AspectRatio(
-                            aspectRatio: 1, // Square image
+                        AspectRatio(
+                          aspectRatio: 1, // Square aspect ratio
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.grey, // Change the color here
+                            ),
                             child: Stack(
                               children: [
                                 if (imageUrl != null)

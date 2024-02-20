@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   simple_speed_dial: ^0.1.7
-  google_fonts: ^2.2.0
+  path_provider: ^2.0.2
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -47,12 +47,19 @@ dependencies:
   google_sign_in: ^6.1.5
   flutter_cache_manager: ^3.2.0
   cached_network_image: ^3.2.0
+  image_cropper: ^5.0.1
+  flutter_image_compress: ^2.1.0
+  insta_assets_picker: ^2.2.1
+  wechat_assets_picker: 9.0.0-dev.2
+  permission_handler: ^10.3.0
+
+dependency_overrides:
+  photo_manager: ^3.0.0-dev.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   image_picker: ^0.8.3
-  google_fonts: ^2.2.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -60,6 +67,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  google_fonts: 6.1.0
 
 
 # For information on the generic Dart part of this file, see the

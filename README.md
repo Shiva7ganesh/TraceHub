@@ -19,7 +19,7 @@ _Prerequisites_
 
 # Installation
 1. Clone the repository:
-   `git clone https://github.com/Shiva7ganesh/lostandfound.git`
+   `git clone https://github.com/Shiva7ganesh/TraceHub.git`
 2. Open the project in Android Studio.
 3. Install dependencies:
    `flutter pub get`

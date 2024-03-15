@@ -66,7 +66,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       final croppedImage = await imageCropper.cropImage(
         sourcePath: pickedImage.path,
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 100,
+        compressQuality: 30,
       );
 
       if (croppedImage != null) {

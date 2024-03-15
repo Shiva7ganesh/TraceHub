@@ -47,32 +47,6 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       print('Error picking images: $e');
     }
   }
-  // Function to handle taking a picture from the camera
-  Future<void> _takePicture() async {
-    final picker = ImagePicker();
-
-    try {
-      final pickedImage = await picker.pickImage(source: ImageSource.camera);
-      if (pickedImage == null) {
-        return;
-      }
-
-      final imageCropper = ImageCropper();
-      final croppedImage = await imageCropper.cropImage(
-        sourcePath: pickedImage.path,
-        aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 100,
-      );
-
-      if (croppedImage != null) {
-        setState(() {
-          _pickedImages.add(File(croppedImage.path));
-        });
-      }
-    } catch (e) {
-      print('Error taking a picture: $e');
-    }
-  }
 
   // Function to handle submitting the post
   Future<void> _submitPost() async {
@@ -221,18 +195,9 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 ),
               ),
               SizedBox(height: 16.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: _addImage,
-                    child: Text('Add from Gallery'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _takePicture,
-                    child: Text('Take a Picture'),
-                  ),
-                ],
+              ElevatedButton(
+                onPressed: _addImage,
+                child: Text('Add from Gallery'),
               ),
               SizedBox(height: 16.0),
               TextFormField(

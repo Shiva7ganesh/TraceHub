@@ -6,7 +6,7 @@ import 'package:lostandfound/features/user_auth/presentation/widgets/form_contai
 import 'package:lostandfound/global/common/toast.dart';
 
 class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+  const SignUpPage({Key? key}) : super(key: key);
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
@@ -18,6 +18,7 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
+  TextEditingController _phoneNumberController = TextEditingController();
 
   bool isSigningUp = false;
 
@@ -26,6 +27,7 @@ class _SignUpPageState extends State<SignUpPage> {
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneNumberController.dispose();
     super.dispose();
   }
 
@@ -71,12 +73,19 @@ class _SignUpPageState extends State<SignUpPage> {
                 isPasswordField: true,
               ),
               SizedBox(
+                height: 10,
+              ),
+              FormContainerWidget(
+                controller: _phoneNumberController,
+                hintText: "Mobile Number",
+                isPasswordField: false,
+              ),
+              SizedBox(
                 height: 30,
               ),
               GestureDetector(
-                onTap:  (){
+                onTap: () {
                   _signUp();
-
                 },
                 child: Container(
                   width: double.infinity,
@@ -86,11 +95,15 @@ class _SignUpPageState extends State<SignUpPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
-                      child: isSigningUp ? CircularProgressIndicator(color: Colors.white,):Text(
-                        "Sign Up",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      )),
+                    child: isSigningUp
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                      "Sign Up",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
               ),
               SizedBox(
@@ -104,18 +117,18 @@ class _SignUpPageState extends State<SignUpPage> {
                     width: 5,
                   ),
                   GestureDetector(
-                      onTap: () {
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => LoginPage()),
-                                (route) => false);
-                      },
-                      child: Text(
-                        "Login",
-                        style: TextStyle(
-                            color: Colors.blue, fontWeight: FontWeight.bold),
-                      ))
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                              (route) => false);
+                    },
+                    child: Text(
+                      "Login",
+                      style: TextStyle(
+                          color: Colors.blue, fontWeight: FontWeight.bold),
+                    ),
+                  )
                 ],
               )
             ],
@@ -126,25 +139,40 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _signUp() async {
-
     setState(() {
       isSigningUp = true;
     });
 
-    String username = _usernameController.text;
-    String email = _emailController.text;
-    String password = _passwordController.text;
+    String username = _usernameController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+    String phoneNumber = _phoneNumberController.text.trim();
 
-    User? user = await _auth.signUpWithEmailAndPassword(email, password);
+    // Validate username and mobile number
+    if (username.isEmpty || phoneNumber.length != 10) {
+      showToast(message: "Please enter valid username and mobile number");
+      setState(() {
+        isSigningUp = false;
+      });
+      return;
+    }
+
+    User? user = await _auth.signUpWithEmailAndPassword(
+      email: email,
+      password: password,
+      username: username,
+      phoneNumber: phoneNumber,
+    );
 
     setState(() {
       isSigningUp = false;
     });
+
     if (user != null) {
       showToast(message: "User is successfully created");
       Navigator.pushNamed(context, "/home");
     } else {
-      showToast(message: "Some error happend");
+      showToast(message: "Some error happened");
     }
   }
 }

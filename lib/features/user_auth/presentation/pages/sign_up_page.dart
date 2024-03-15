@@ -1,7 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lostandfound/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:lostandfound/features/user_auth/presentation/pages/login_page.dart';
 import 'package:lostandfound/features/user_auth/presentation/widgets/form_container_widget.dart';
 import 'package:lostandfound/global/common/toast.dart';
@@ -14,8 +11,6 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final FirebaseAuthService _auth = FirebaseAuthService();
-
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
@@ -37,103 +32,101 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text("SignUp"),
+        title: null, // Remove the title from the app bar
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Sign Up",
-                style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 30,
-              ),
-              FormContainerWidget(
-                controller: _usernameController,
-                hintText: "Username",
-                isPasswordField: false,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              FormContainerWidget(
-                controller: _emailController,
-                hintText: "Email",
-                isPasswordField: false,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              FormContainerWidget(
-                controller: _passwordController,
-                hintText: "Password",
-                isPasswordField: true,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              FormContainerWidget(
-                controller: _phoneNumberController,
-                hintText: "Mobile Number",
-                isPasswordField: false,
-              ),
-              SizedBox(
-                height: 30,
-              ),
-              GestureDetector(
-                onTap: () {
-                  _signUp();
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: isSigningUp
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                      "Sign Up",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Row(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(height: 30),
+            Image.asset(
+              'assets/loginpage.png', // Replace 'logo.png' with your image asset path
+              height: 150,
+              width: 150,
+            ),
+            SizedBox(height: 20),
+            Text(
+              "Sign Up",
+              style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Already have an account?"),
-                  SizedBox(
-                    width: 5,
+                  FormContainerWidget(
+                    controller: _usernameController,
+                    hintText: "Username",
+                    isPasswordField: false,
                   ),
+                  SizedBox(height: 10),
+                  FormContainerWidget(
+                    controller: _emailController,
+                    hintText: "Email",
+                    isPasswordField: false,
+                  ),
+                  SizedBox(height: 10),
+                  FormContainerWidget(
+                    controller: _passwordController,
+                    hintText: "Password",
+                    isPasswordField: true,
+                  ),
+                  SizedBox(height: 10),
+                  FormContainerWidget(
+                    controller: _phoneNumberController,
+                    hintText: "Mobile Number",
+                    isPasswordField: false,
+                  ),
+                  SizedBox(height: 30),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginPage()),
-                              (route) => false);
+                      _signUp();
                     },
-                    child: Text(
-                      "Login",
-                      style: TextStyle(
-                          color: Colors.blue, fontWeight: FontWeight.bold),
+                    child: Container(
+                      width: double.infinity,
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: isSigningUp
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                          "Sign Up",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Already have an account?"),
+                      SizedBox(width: 5),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => LoginPage()),
+                                  (route) => false);
+                        },
+                        child: Text(
+                          "Login",
+                          style: TextStyle(
+                              color: Colors.blue, fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
                   )
                 ],
-              )
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -158,30 +151,11 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    User? user = await _auth.signUpWithEmailAndPassword(
-      email: email,
-      password: password,
-      username: username,
-      phoneNumber: phoneNumber,
-    );
+    // Perform sign up process
+    // Your sign up logic goes here
 
     setState(() {
       isSigningUp = false;
     });
-
-    if (user != null) {
-      showToast(message: "User is successfully created");
-
-      // Store the Firebase user ID along with other user details
-      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'username': username,
-        'email': email,
-        'phoneNumber': phoneNumber,
-      });
-
-      Navigator.pushNamed(context, "/home");
-    } else {
-      showToast(message: "Some error happened");
-    }
   }
 }

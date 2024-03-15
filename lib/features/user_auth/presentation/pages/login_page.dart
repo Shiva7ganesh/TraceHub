@@ -250,9 +250,19 @@ class _LoginPageState extends State<LoginPage> {
         final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
 
         final String? email = userCredential.user!.email;
+        final String? userId = userCredential.user!.uid;
+        final String? username = userCredential.user!.displayName;
+
         if (email != null &&
             (email.endsWith('@cmrithyderabad.edu.in') ||
                 email.endsWith('@cmrithyderabad.ac.in'))) {
+          // Store user data in Firestore
+          await FirebaseFirestore.instance.collection('users').doc(userId).set({
+            'email': email,
+            'username': username,
+            // Add other fields as needed
+          });
+
           Navigator.pushNamed(context, "/home");
         } else {
           // Sign out the user if the email is not valid

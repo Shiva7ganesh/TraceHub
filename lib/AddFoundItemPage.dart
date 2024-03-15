@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -79,8 +80,6 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
     }
   }
 
-
-
   Future<void> _submitPost() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -95,12 +94,17 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
 
       final foundItems = FirebaseFirestore.instance.collection('found_items');
 
+      // Get current user ID
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final userId = currentUser?.uid;
+
       await foundItems.add({
         'itemName': itemName,
         'description': description,
         'placeFound': placeFound,
         'contactInfo': contactInfo,
         'images': imageUrls,
+        'userId': userId, // Store the user ID
         'timestamp': FieldValue.serverTimestamp(),
       });
 

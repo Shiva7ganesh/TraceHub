@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -63,12 +64,17 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
 
       final lostItems = FirebaseFirestore.instance.collection('lost_items');
 
+      // Get current user ID
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final userId = currentUser?.uid;
+
       await lostItems.add({
         'itemName': itemName,
         'description': description,
         'placeLost': placeLost,
         'contactInfo': contactInfo,
         'images': imageUrls,
+        'userId': userId, // Store the user ID
         'timestamp': FieldValue.serverTimestamp(),
       });
 

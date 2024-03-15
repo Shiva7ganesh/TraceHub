@@ -78,6 +78,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/splash_image.png
+    - assets/loginpage.png
 
 
   # The following line ensures that the Material Icons font is

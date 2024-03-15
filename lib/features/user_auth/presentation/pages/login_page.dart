@@ -165,7 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: 20),
                 Text(
                   "Please use your organization email to login",
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 15, color: Colors.black),
                 ),
                 SizedBox(height: 20),
               ],
@@ -179,10 +179,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Use organization email to login",
-                  style: TextStyle(fontSize: 15, color: Colors.black),
-                ),
+                Text("Don't have an account?"),
                 SizedBox(width: 5),
                 GestureDetector(
                   onTap: () {
@@ -233,7 +230,7 @@ class _LoginPageState extends State<LoginPage> {
 
   _signInWithGoogle() async {
     setState(() {
-      _isSigning = true;
+      _isSigning = true; // Set the flag to indicate signing in process started
     });
 
     final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -258,15 +255,22 @@ class _LoginPageState extends State<LoginPage> {
                 email.endsWith('@cmrithyderabad.ac.in'))) {
           Navigator.pushNamed(context, "/home");
         } else {
-          await _firebaseAuth.signOut();
+          // Sign out the user if the email is not valid
+          await _googleSignIn.signOut();
           showToast(message: "Access denied. Please use a valid email address.");
+          // Reset the Google sign-in page
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+                (route) => false,
+          );
         }
       }
     } catch (e) {
       showToast(message: "Some error occurred: $e");
     } finally {
       setState(() {
-        _isSigning = false;
+        _isSigning = false; // Reset the signing flag after sign-in process is completed
       });
     }
   }

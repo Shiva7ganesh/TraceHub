@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lostandfound/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
@@ -170,6 +171,14 @@ class _SignUpPageState extends State<SignUpPage> {
 
     if (user != null) {
       showToast(message: "User is successfully created");
+
+      // Store the Firebase user ID along with other user details
+      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'username': username,
+        'email': email,
+        'phoneNumber': phoneNumber,
+      });
+
       Navigator.pushNamed(context, "/home");
     } else {
       showToast(message: "Some error happened");

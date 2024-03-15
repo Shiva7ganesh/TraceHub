@@ -1,16 +1,30 @@
-# lostandfound
+# Trace Hub
+Trace Hub is a student-centric app designed to facilitate the process of reporting and finding 
+lost items within a college community. It serves as a centralized platform for students to post 
+details about both lost and found items, making it easier for the community to reunite with their belongings.
 
-A new Flutter project.
+# Features
+1. **Lost and Found Posts**: Students can create posts for both lost and found items, providing essential
+details such as a description, location, and contact information.
+2. **Image Upload**: Allow users to upload images of lost or found items to provide a visual reference, 
+making it easier for users to identify their belongings.
+3. **Item Descriptions:**: Allow users to provide detailed descriptions of their lost or found items, 
+including Item Name, Place Found and Contact Information.
 
-## Getting Started
+# Getting Started
+_Prerequisites_
+1. Android Studio
+2. Flutter
+3. Dart SDK
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Installation
+1. Clone the repository:
+   `git clone https://github.com/Shiva7ganesh/TraceHub.git`
+2. Open the project in Android Studio.
+3. Install dependencies:
+   `flutter pub get`
+4. Configure your emulator.
+5. Run the application:
+   `flutter run`
+# Demo Video
+  'https://www.youtube.com/watch?v=jT2_naqc4nA'

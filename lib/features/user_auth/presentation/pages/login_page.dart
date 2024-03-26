@@ -80,7 +80,7 @@ class _LoginPageState extends State<LoginPage> {
                     items: [
                       DropdownMenuItem(
                         value: 'Organization A',
-                        child: Text('CMR Institute Of Tecnology,Hyderabad'),
+                        child: Text('CMR Institute Of Technology,Hyderabad'),
                       ),
                       // Add more organizations as needed
                     ],

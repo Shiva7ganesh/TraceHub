@@ -17,6 +17,15 @@ class _SignUpPageState extends State<SignUpPage> {
   TextEditingController _phoneNumberController = TextEditingController();
 
   bool isSigningUp = false;
+  String? _selectedCollege;
+
+  List<String> colleges = [
+    'College A',
+    'College B',
+    'College C',
+    'College D',
+    // Add more colleges as needed
+  ];
 
   @override
   void dispose() {
@@ -55,6 +64,38 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset: Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedCollege,
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedCollege = newValue;
+                        });
+                      },
+                      items: colleges.map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      decoration: InputDecoration(
+                        hintText: 'Select College or Organization',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 15),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
                   FormContainerWidget(
                     controller: _usernameController,
                     hintText: "Username",
@@ -78,6 +119,8 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "Mobile Number",
                     isPasswordField: false,
                   ),
+                  SizedBox(height: 10),
+
                   SizedBox(height: 30),
                   GestureDetector(
                     onTap: () {

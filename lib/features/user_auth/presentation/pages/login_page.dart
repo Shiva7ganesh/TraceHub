@@ -1,14 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lostandfound/features/user_auth/presentation/pages/sign_up_page.dart';
 import 'package:lostandfound/features/user_auth/presentation/widgets/form_container_widget.dart';
 import 'package:lostandfound/global/common/toast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
-import '../../firebase_auth_implementation/firebase_auth_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key});
@@ -19,18 +16,11 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isSigning = false;
-  final FirebaseAuthService _auth = FirebaseAuthService();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   String? _selectedOrganization;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  bool _organizationDropdownError = false;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +49,8 @@ class _LoginPageState extends State<LoginPage> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _organizationDropdownError ? Colors.red[100] : Colors
+                        .white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -75,17 +66,27 @@ class _LoginPageState extends State<LoginPage> {
                     onChanged: (value) {
                       setState(() {
                         _selectedOrganization = value;
+                        _organizationDropdownError = false;
                       });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        setState(() {
+                          _organizationDropdownError = true;
+                        });
+                        return 'Please select organization';
+                      }
+                      return null;
                     },
                     items: [
                       DropdownMenuItem(
-                        value: 'Organization A',
-                        child: Text('CMR Institute Of Technology,Hyderabad'),
+                        value: 'CMRIT',
+                        child: Text('CMR Institute Of Technology, Hyderabad'),
                       ),
                       // Add more organizations as needed
                     ],
                     decoration: InputDecoration(
-                      hintText: 'Select Organization',
+                      hintText: 'Select college/Organization',
                       border: InputBorder.none,
                     ),
                   ),
@@ -214,17 +215,43 @@ class _LoginPageState extends State<LoginPage> {
     String email = _emailController.text;
     String password = _passwordController.text;
 
-    User? user = await _auth.signInWithEmailAndPassword(email, password);
+    if (_selectedOrganization == null || _selectedOrganization!.isEmpty) {
+      setState(() {
+        _organizationDropdownError = true;
+        _isSigning = false;
+      });
+      showToast(message: "Please select organization");
+      return;
+    }
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _isSigning = false;
+      });
+      showToast(message: "Please enter email and password");
+      return;
+    }
+
+    UserCredential? userCredential;
+    try {
+      userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      print('Failed with error code: ${e.code}');
+      print(e.message);
+    }
 
     setState(() {
       _isSigning = false;
     });
 
-    if (user != null) {
+    if (userCredential != null) {
       showToast(message: "User is successfully signed in");
       Navigator.pushReplacementNamed(context, "/home");
     } else {
-      showToast(message: "some error occured");
+      showToast(message: "Some error occurred");
     }
   }
 
@@ -232,11 +259,20 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _isSigning = true; // Set the flag to indicate signing in process started
     });
+    if (_selectedOrganization == null || _selectedOrganization!.isEmpty) {
+      setState(() {
+        _organizationDropdownError = true;
+        _isSigning = false;
+      });
+      showToast(message: "Please select organization");
+      return;
+    }
 
     final GoogleSignIn _googleSignIn = GoogleSignIn();
 
     try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn
+          .signIn();
 
       if (googleSignInAccount != null) {
         final GoogleSignInAuthentication googleSignInAuthentication =
@@ -247,7 +283,8 @@ class _LoginPageState extends State<LoginPage> {
           accessToken: googleSignInAuthentication.accessToken,
         );
 
-        final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
+        final UserCredential userCredential =
+        await _firebaseAuth.signInWithCredential(credential);
 
         final String? email = userCredential.user!.email;
         final String? userId = userCredential.user!.uid;
@@ -260,6 +297,7 @@ class _LoginPageState extends State<LoginPage> {
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'email': email,
             'username': username,
+            'organization': _selectedOrganization,
             // Add other fields as needed
           });
 
@@ -267,7 +305,8 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // Sign out the user if the email is not valid
           await _googleSignIn.signOut();
-          showToast(message: "Access denied. Please use a valid email address.");
+          showToast(
+              message: "Access denied. Please use a College email address.");
           // Reset the Google sign-in page
           Navigator.pushAndRemoveUntil(
             context,
@@ -280,7 +319,8 @@ class _LoginPageState extends State<LoginPage> {
       showToast(message: "Some error occurred: $e");
     } finally {
       setState(() {
-        _isSigning = false; // Reset the signing flag after sign-in process is completed
+        _isSigning =
+        false; // Reset the signing flag after sign-in process is completed
       });
     }
   }

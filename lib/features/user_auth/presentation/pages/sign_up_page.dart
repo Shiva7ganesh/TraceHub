@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:lostandfound/features/user_auth/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:lostandfound/features/user_auth/presentation/pages/login_page.dart';
 import 'package:lostandfound/features/user_auth/presentation/widgets/form_container_widget.dart';
 import 'package:lostandfound/global/common/toast.dart';
@@ -11,21 +14,16 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final FirebaseAuthService _auth = FirebaseAuthService();
+
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _phoneNumberController = TextEditingController();
 
   bool isSigningUp = false;
-  String? _selectedCollege;
-
-  List<String> colleges = [
-    'College A',
-    'College B',
-    'College C',
-    'College D',
-    // Add more colleges as needed
-  ];
+  String? _selectedOrganization;
+  bool _organizationDropdownError = false;
 
   @override
   void dispose() {
@@ -41,61 +39,71 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: null, // Remove the title from the app bar
       ),
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 30),
-            Image.asset(
-              'assets/loginpage.png', // Replace 'logo.png' with your image asset path
-              height: 150,
-              width: 150,
-            ),
-            SizedBox(height: 20),
-            Text(
-              "Sign Up",
-              style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 30),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Image.asset(
+                    'assets/loginpage.png',
+                    height: 150,
+                    width: 150,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Sign Up",
+                    style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 20),
                   Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
+                      color: _organizationDropdownError ? Colors.red[100] : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 5,
-                          blurRadius: 7,
-                          offset: Offset(0, 3), // changes position of shadow
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
                         ),
                       ],
                     ),
                     child: DropdownButtonFormField<String>(
-                      value: _selectedCollege,
-                      onChanged: (newValue) {
+                      value: _selectedOrganization,
+                      onChanged: (value) {
                         setState(() {
-                          _selectedCollege = newValue;
+                          _selectedOrganization = value;
+                          _organizationDropdownError = false;
                         });
                       },
-                      items: colleges.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          setState(() {
+                            _organizationDropdownError = true;
+                          });
+                          return 'Please select organization';
+                        }
+                        return null;
+                      },
+                      items: [
+                        DropdownMenuItem(
+                          value: 'CMRIT',
+                          child: Text('CMR Institute Of Technology, Hyderabad'),
+                        ),
+                        // Add more organizations as needed
+                      ],
                       decoration: InputDecoration(
-                        hintText: 'Select College or Organization',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 15),
+                        hintText: 'Select college/Organization',
                         border: InputBorder.none,
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: 20),
                   FormContainerWidget(
                     controller: _usernameController,
                     hintText: "Username",
@@ -119,8 +127,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "Mobile Number",
                     isPasswordField: false,
                   ),
-                  SizedBox(height: 10),
-
                   SizedBox(height: 30),
                   GestureDetector(
                     onTap: () {
@@ -168,7 +174,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   )
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),
@@ -185,20 +191,52 @@ class _SignUpPageState extends State<SignUpPage> {
     String password = _passwordController.text.trim();
     String phoneNumber = _phoneNumberController.text.trim();
 
-    // Validate username and mobile number
-    if (username.isEmpty || phoneNumber.length != 10) {
-      showToast(message: "Please enter valid username and mobile number");
+    // Validate username, email, password, and mobile number
+    if (username.isEmpty || email.isEmpty || password.isEmpty || phoneNumber.length != 10) {
+      showToast(message: "Please enter valid details");
       setState(() {
         isSigningUp = false;
       });
       return;
     }
 
-    // Perform sign up process
-    // Your sign up logic goes here
+    // Check if organization is selected
+    if (_selectedOrganization == null || _selectedOrganization!.isEmpty) {
+      setState(() {
+        _organizationDropdownError = true;
+      });
+      showToast(message: "Please select organization");
+      setState(() {
+        isSigningUp = false;
+      });
+      return;
+    }
+
+    User? user = await _auth.signUpWithEmailAndPassword(
+      email: email,
+      password: password,
+      username: username,
+      phoneNumber: phoneNumber,
+    );
 
     setState(() {
       isSigningUp = false;
     });
+
+    if (user != null) {
+      showToast(message: "User is successfully created");
+
+      // Store the Firebase user ID along with other user details
+      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'username': username,
+        'email': email,
+        'phoneNumber': phoneNumber,
+        'organization': _selectedOrganization,
+      });
+
+      Navigator.pushNamed(context, "/home");
+    } else {
+      showToast(message: "Some error happened");
+    }
   }
 }

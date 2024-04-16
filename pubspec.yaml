@@ -52,6 +52,7 @@ dependencies:
   insta_assets_picker: ^2.2.1
   wechat_assets_picker: 9.0.0-dev.2
   permission_handler: ^10.3.0
+  intl: ^0.17.0
 
 
 dependency_overrides:

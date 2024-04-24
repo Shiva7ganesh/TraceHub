@@ -15,7 +15,10 @@ class FoundItemsPage extends StatelessWidget {
         automaticallyImplyLeading: false, // Update the title here
       ),
       body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('found_items').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('items')
+            .where('Itemtype', isEqualTo: 'Found')
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));

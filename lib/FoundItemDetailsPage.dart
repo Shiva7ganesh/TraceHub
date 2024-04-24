@@ -8,6 +8,10 @@ class FoundItemDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Retrieve date and time from the item data
+    Timestamp? timestamp = item['dateTimeFound'] as Timestamp?;
+    DateTime? dateTimeFound = timestamp?.toDate();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Found Item Details'),
@@ -123,9 +127,58 @@ class FoundItemDetailsPage extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(height: 10),
+            // Date and time found
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Date and Time Found: ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    // Format the date and time manually
+                    dateTimeFound != null
+                        ? '${dateTimeFound.year}-${_formatTwoDigits(dateTimeFound.month)}-${_formatTwoDigits(dateTimeFound.day)} '
+                        '${_formatTwoDigits(dateTimeFound.hour)}:${_formatTwoDigits(dateTimeFound.minute)}'
+                        : 'No Date and Time Found',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20), // Add some space before the button
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Handle button press
+                  // Delete the item from Firebase
+                  FirebaseFirestore.instance.collection('items').doc(item.id).delete().then((_) {
+                    // If deletion is successful, navigate back to the previous screen or perform any other action
+                    Navigator.pop(context); // Example: Navigate back to the previous screen
+                  }).catchError((error) {
+                    // Handle error if deletion fails
+                    print('Failed to delete item: $error');
+                    // You can show a snackbar or display an error message to the user
+                  });
+                },
+                child: Text('Item Claimed'),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  // Helper function to format digits with leading zeros
+  String _formatTwoDigits(int n) {
+    if (n >= 10) {
+      return '$n';
+    }
+    return '0$n';
   }
 }

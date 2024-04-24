@@ -97,20 +97,26 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
     try {
       final imageUrls = await _uploadImages();
 
-      final foundItems = FirebaseFirestore.instance.collection('found_items');
+      final Items = FirebaseFirestore.instance.collection('items');
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
 
-      await foundItems.add({
+      // Combine selected date and time into a single DateTime object
+      DateTime combinedDateTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day,
+          selectedTime!.hour, selectedTime!.minute);
+
+      await Items.add({
         'itemName': itemName,
         'description': description,
         'placeFound': placeFound,
         'contactInfo': contactInfo,
         'images': imageUrls,
         'userId': userId,
-        'organizationId': organizationId,
+        'organizationId': 'CMRIT',
         'timestamp': FieldValue.serverTimestamp(),
+        'dateTimeFound': combinedDateTime,
+        'Itemtype':'Found',// Store combined DateTime in Firestore
       });
 
       _clearForm();
@@ -154,7 +160,6 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       });
     }
   }
-
   Future<List<String>> _uploadImages() async {
     final imageUrls = <String>[];
 

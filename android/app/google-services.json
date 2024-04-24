@@ -7,26 +7,26 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:263451860699:android:2e845d4d58d21b477e36fe",
+        "mobilesdk_app_id": "1:263451860699:android:c99e1f89556381d37e36fe",
         "android_client_info": {
-          "package_name": "com.example.lost"
+          "package_name": "com.example.lostandfound"
         }
       },
       "oauth_client": [
         {
-          "client_id": "263451860699-eovcv71c7tdcof8hqhd959h8tpi0qtlu.apps.googleusercontent.com",
+          "client_id": "263451860699-2tl7k50gvnkb271l44jcl584kgcc3kav.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.lost",
+            "package_name": "com.example.lostandfound",
             "certificate_hash": "a6481a69165c8e5156344eff06ef8d390ed15a83"
           }
         },
         {
-          "client_id": "263451860699-u50iltsdumoefj4h6mf160h9nhehdlga.apps.googleusercontent.com",
+          "client_id": "263451860699-fflakhn7sh8r8omjv195mmuokgsp6tfq.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.lost",
-            "certificate_hash": "e4ce4b0a845a9fc21b29b1f42f9cd54bd747df84"
+            "package_name": "com.example.lostandfound",
+            "certificate_hash": "394f22487b1f2a1e79f3c0efffeaedbbff49b33f"
           }
         },
         {
@@ -59,17 +59,25 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:263451860699:android:c99e1f89556381d37e36fe",
+        "mobilesdk_app_id": "1:263451860699:android:9605baa60b377d877e36fe",
         "android_client_info": {
-          "package_name": "com.example.lostandfound"
+          "package_name": "com.ultranix.tracehub"
         }
       },
       "oauth_client": [
         {
-          "client_id": "263451860699-2tl7k50gvnkb271l44jcl584kgcc3kav.apps.googleusercontent.com",
+          "client_id": "263451860699-ab1flpon6erknafq35j6c6kmpv7c16pe.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.lostandfound",
+            "package_name": "com.ultranix.tracehub",
+            "certificate_hash": "394f22487b1f2a1e79f3c0efffeaedbbff49b33f"
+          }
+        },
+        {
+          "client_id": "263451860699-ape34v7k3jsg8s9hsuqtapcfinb9obmu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ultranix.tracehub",
             "certificate_hash": "a6481a69165c8e5156344eff06ef8d390ed15a83"
           }
         },

@@ -6,7 +6,7 @@ import 'package:lostandfound/MyHomePage.dart';
 import 'package:lostandfound/features/app/splash_screen/splash_screen.dart';
 import 'package:lostandfound/features/user_auth/presentation/pages/login_page.dart';
 import 'package:lostandfound/features/user_auth/presentation/pages/sign_up_page.dart';
-import 'package:lostandfound/profilepage.dart';
+import 'package:lostandfound/features/user_auth/presentation/pages/profilepage.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();

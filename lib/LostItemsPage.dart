@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
-import 'AddFoundItemPage.dart'; // Import your AddFoundItemPage widget here
-import 'AddLostItemPage.dart'; // Import your AddLostItemPage widget here
+import 'package:lostandfound/AddFoundItemPage.dart'; // Import your AddFoundItemPage widget here
+import 'package:lostandfound/AddLostItemPage.dart'; // Import your AddLostItemPage widget here
 import 'package:lostandfound/FoundItemDetailsPage.dart';
 import 'package:lostandfound/LostItemDetailsPage.dart';
 
@@ -14,8 +14,11 @@ class LostItemsPage extends StatelessWidget {
         title: Text('Lost Items'),
         automaticallyImplyLeading: false,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('lost_items').snapshots(),
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection('items')
+            .where('Itemtype', isEqualTo: 'Lost')
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));

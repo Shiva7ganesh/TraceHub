@@ -8,6 +8,10 @@ class LostItemDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Retrieve date and time from the item data
+    Timestamp? timestamp = item['dateTimeLost'] as Timestamp?;
+    DateTime? dateTimeLost = timestamp?.toDate();
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Lost Item Details'),
@@ -86,7 +90,7 @@ class LostItemDetailsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 10),
-            // Place found
+            // Place lost
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -123,9 +127,40 @@ class LostItemDetailsPage extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(height: 10),
+            // Date and time lost
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Date and Time Lost: ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    // Format the date and time manually
+                    dateTimeLost != null
+                        ? '${dateTimeLost.year}-${_formatTwoDigits(dateTimeLost.month)}-${_formatTwoDigits(dateTimeLost.day)} '
+                        '${_formatTwoDigits(dateTimeLost.hour)}:${_formatTwoDigits(dateTimeLost.minute)}'
+                        : 'No Date and Time Lost',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  // Helper function to format digits with leading zeros
+  String _formatTwoDigits(int n) {
+    if (n >= 10) {
+      return '$n';
+    }
+    return '0$n';
   }
 }

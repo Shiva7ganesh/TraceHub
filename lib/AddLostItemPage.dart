@@ -1,11 +1,12 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:insta_assets_picker/insta_assets_picker.dart';
+import 'package:intl/intl.dart';
 
 import 'MyHomePage.dart';
 
@@ -20,36 +21,42 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
   String placeLost = '';
   String contactInfo = '';
   List<File> _pickedImages = [];
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
+  String? organizationId;
   bool _isLoading = false;
-  final _formKey = GlobalKey<FormState>(); // Form key to manage form state
+  final _formKey = GlobalKey<FormState>();
 
-  // Function to handle adding an image
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrganizationId();
+  }
+
+  Future<void> _fetchOrganizationId() async {
+    String? orgId = await getOrganizationId();
+    setState(() {
+      organizationId = orgId;
+    });
+  }
+
   Future<void> _addImage() async {
-    try {
-      final pickedAssets = await InstaAssetPicker.pickAssets(
-        context,
-        title: 'Select images',
-        maxAssets: 10,
-        onCompleted: (Stream<InstaAssetsExportDetails> stream) async {
-          await for (InstaAssetsExportDetails details in stream) {
-            setState(() {
-              _pickedImages.addAll(details.croppedFiles);
-            });
-          }
+    final picker = ImagePicker();
 
-          // Navigate back to the submit button page after selecting images
-          Navigator.pop(context);
-        },
-      );
-      if (pickedAssets == null || pickedAssets.isEmpty) {
+    try {
+      List<XFile>? pickedImages = await picker.pickMultiImage();
+
+      if (pickedImages == null || pickedImages.isEmpty) {
         return;
       }
+
+      setState(() {
+        _pickedImages.addAll(pickedImages.map((image) => File(image.path)));
+      });
     } catch (e) {
       print('Error picking images: $e');
     }
   }
-
-  // Function to handle submitting the post
   Future<void> _submitPost() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -62,20 +69,26 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
     try {
       final imageUrls = await _uploadImages();
 
-      final lostItems = FirebaseFirestore.instance.collection('lost_items');
+      final Items = FirebaseFirestore.instance.collection('items');
 
-      // Get current user ID
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
 
-      await lostItems.add({
+      // Combine selected date and time into a single DateTime object
+      DateTime combinedDateTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day,
+          selectedTime!.hour, selectedTime!.minute);
+
+      await Items.add({
         'itemName': itemName,
         'description': description,
         'placeLost': placeLost,
         'contactInfo': contactInfo,
         'images': imageUrls,
-        'userId': userId, // Store the user ID
+        'userId': userId,
+        'organizationId': 'CMRIT',
         'timestamp': FieldValue.serverTimestamp(),
+        'dateTimeLost': combinedDateTime,
+        'Itemtype':'Lost',// Store combined DateTime in Firestore
       });
 
       _clearForm();
@@ -84,7 +97,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
         context: context,
         builder: (BuildContext context) => AlertDialog(
           title: Text('Submitted Successfully'),
-          content: Text('Your lost item has been submitted successfully.'),
+          content: Text('Your Lost item has been submitted successfully.'),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pushReplacement(
@@ -119,8 +132,6 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       });
     }
   }
-
-  // Function to upload images to Firebase Storage
   Future<List<String>> _uploadImages() async {
     final imageUrls = <String>[];
 
@@ -145,7 +156,6 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
     return imageUrls;
   }
 
-  // Function to clear the form and imageUrls
   void _clearForm() {
     setState(() {
       itemName = '';
@@ -154,6 +164,34 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       contactInfo = '';
       _pickedImages.clear();
     });
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime != null && pickedTime != selectedTime) {
+      setState(() {
+        selectedTime = pickedTime;
+      });
+    }
   }
 
   @override
@@ -173,7 +211,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 onTap: _addImage,
                 child: Container(
                   width: double.infinity,
-                  height: 300, // Increased height of the container
+                  height: 300,
                   color: Colors.grey.withOpacity(0.5),
                   child: Center(
                     child: _pickedImages.isNotEmpty
@@ -183,8 +221,8 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                       itemBuilder: (context, index) {
                         return Container(
                           margin: EdgeInsets.all(4.0),
-                          width: 300, // Set both width and height to maintain a square shape
-                          height: 300, // Set both width and height to maintain a square shape
+                          width: 300,
+                          height: 300,
                           child: Image.file(
                             _pickedImages[index],
                             fit: BoxFit.cover,
@@ -241,12 +279,39 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
               SizedBox(height: 16.0),
               TextFormField(
                 decoration: InputDecoration(
-                    labelText: 'Contact Information (Optional)'),
+                    labelText: 'Contact Information (Mandatory)'),
                 onChanged: (value) {
                   setState(() {
                     contactInfo = value;
                   });
                 },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Contact information is required';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16.0),
+              ListTile(
+                title: Text(
+                  'Date Lost',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(selectedDate == null
+                    ? 'Select Date'
+                    : DateFormat('yyyy-MM-dd').format(selectedDate!)),
+                onTap: () => _selectDate(context),
+              ),
+              ListTile(
+                title: Text(
+                  'Time Lost',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(selectedTime == null
+                    ? 'Select Time'
+                    : selectedTime!.format(context)),
+                onTap: () => _selectTime(context),
               ),
               SizedBox(height: 16.0),
               ElevatedButton(
@@ -259,4 +324,27 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       ),
     );
   }
+}
+
+Future<String?> getOrganizationId() async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      DocumentSnapshot userSnapshot =
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+      if (userSnapshot.exists) {
+        Map<String, dynamic>? userData = userSnapshot.data() as Map<String, dynamic>?;
+
+        if (userData != null && userData.containsKey('organizationId')) {
+          return userData['organization'];
+        }
+      }
+    }
+  } catch (e) {
+    print('Error getting organization ID: $e');
+  }
+
+  return null;
 }

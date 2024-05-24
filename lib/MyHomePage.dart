@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'founditemspage.dart'; // Import FoundItemsPage widget here
 import 'lostitemspage.dart'; // Import LostItemsPage widget here
+import 'UserProfilePage.dart'; // Import UserProfilePage widget here
+
 void main() {
   runApp(const MyApp());
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,16 +21,21 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
+
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
+
   static final List<Widget> _widgetOptions = <Widget>[
     LostItemsPage(), // Use LostItemsPage widget
     FoundItemsPage(), // Use FoundItemsPage widget
+    UserProfilePage(), // Use UserProfilePage widget
   ];
 
   void _onItemTapped(int index) {
@@ -39,8 +48,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Trace Hub'),
-          automaticallyImplyLeading: false
+        title: const Text('Trace Hub'),
+        automaticallyImplyLeading: false,
       ),
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
@@ -52,6 +61,10 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),
             label: 'Found Items',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
         currentIndex: _selectedIndex,

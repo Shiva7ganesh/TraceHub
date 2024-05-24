@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FoundItemDetailsPage extends StatelessWidget {
   final QueryDocumentSnapshot item;
@@ -11,10 +12,46 @@ class FoundItemDetailsPage extends StatelessWidget {
     // Retrieve date and time from the item data
     Timestamp? timestamp = item['dateTimeFound'] as Timestamp?;
     DateTime? dateTimeFound = timestamp?.toDate();
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    final bool isOwner = currentUser?.uid == item['userId'];
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Found Item Details'),
+        actions: [
+          if (isOwner)
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () async {
+                final bool confirmed = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Confirm Delete'),
+                      content: Text('Are you sure you want to delete this Post?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text('Delete'),
+                        ),
+                      ],
+                    );
+                  },
+                ) ?? false;
+
+                if (confirmed) {
+                  await FirebaseFirestore.instance.runTransaction((Transaction myTransaction) async {
+                    myTransaction.delete(item.reference);
+                  });
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -142,30 +179,14 @@ class FoundItemDetailsPage extends StatelessWidget {
                   Text(
                     // Format the date and time manually
                     dateTimeFound != null
-                        ? '${dateTimeFound.year}-${_formatTwoDigits(dateTimeFound.month)}-${_formatTwoDigits(dateTimeFound.day)} '
-                        '${_formatTwoDigits(dateTimeFound.hour)}:${_formatTwoDigits(dateTimeFound.minute)}'
+                        ? '${_formatTwoDigits(dateTimeFound.day)}-${_formatTwoDigits(dateTimeFound.month)}-${dateTimeFound.year} '
+                        '${_formatTwoDigits(dateTimeFound.hour > 12 ? dateTimeFound.hour - 12 : dateTimeFound.hour)}:'
+                        '${_formatTwoDigits(dateTimeFound.minute)} '
+                        '${dateTimeFound.hour >= 12 ? 'PM' : 'AM'}'
                         : 'No Date and Time Found',
                     style: TextStyle(fontSize: 18),
                   ),
                 ],
-              ),
-            ),
-            SizedBox(height: 20), // Add some space before the button
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Handle button press
-                  // Delete the item from Firebase
-                  FirebaseFirestore.instance.collection('items').doc(item.id).delete().then((_) {
-                    // If deletion is successful, navigate back to the previous screen or perform any other action
-                    Navigator.pop(context); // Example: Navigate back to the previous screen
-                  }).catchError((error) {
-                    // Handle error if deletion fails
-                    print('Failed to delete item: $error');
-                    // You can show a snackbar or display an error message to the user
-                  });
-                },
-                child: Text('Item Claimed'),
               ),
             ),
           ],

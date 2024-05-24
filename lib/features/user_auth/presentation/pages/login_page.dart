@@ -16,7 +16,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isSigning = false;
-  bool _isGoogleSigning = false;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
@@ -144,11 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Center(
-                      child: _isGoogleSigning
-                          ? CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                          :Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
@@ -224,7 +219,6 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _organizationDropdownError = true;
         _isSigning = false;
-        _isGoogleSigning = false;
       });
       showToast(message: "Please select organization");
       return;
@@ -257,20 +251,18 @@ class _LoginPageState extends State<LoginPage> {
       showToast(message: "User is successfully signed in");
       Navigator.pushReplacementNamed(context, "/home");
     } else {
-      showToast(message: "Invalid Credentials");
+      showToast(message: "Some error occurred");
     }
   }
 
   _signInWithGoogle() async {
     setState(() {
-      _isGoogleSigning = true;
-      //_isSigning = true; // Set the flag to indicate signing in process started
+      _isSigning = true; // Set the flag to indicate signing in process started
     });
     if (_selectedOrganization == null || _selectedOrganization!.isEmpty) {
       setState(() {
         _organizationDropdownError = true;
         _isSigning = false;
-        _isGoogleSigning = false;
       });
       showToast(message: "Please select organization");
       return;
@@ -313,13 +305,9 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // Sign out the user if the email is not valid
           await _googleSignIn.signOut();
-          await FirebaseAuth.instance.signOut();
           showToast(
               message: "Access denied. Please use a College email address.");
           // Reset the Google sign-in page
-          setState(() {
-            _isGoogleSigning = false;
-          });
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => LoginPage()),
@@ -331,9 +319,9 @@ class _LoginPageState extends State<LoginPage> {
       showToast(message: "Some error occurred: $e");
     } finally {
       setState(() {
-        _isGoogleSigning = false;
+        _isSigning =
         false; // Reset the signing flag after sign-in process is completed
-        });
+      });
     }
-    }
+  }
 }

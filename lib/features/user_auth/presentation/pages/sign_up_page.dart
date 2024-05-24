@@ -16,10 +16,10 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuthService _auth = FirebaseAuthService();
 
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
 
   bool isSigningUp = false;
   String? _selectedOrganization;
@@ -192,8 +192,26 @@ class _SignUpPageState extends State<SignUpPage> {
     String phoneNumber = _phoneNumberController.text.trim();
 
     // Validate username, email, password, and mobile number
-    if (username.isEmpty || email.isEmpty || password.isEmpty || phoneNumber.length != 10) {
+    if (username.isEmpty || email.isEmpty || password.isEmpty || phoneNumber.isEmpty) {
       showToast(message: "Please enter valid details");
+      setState(() {
+        isSigningUp = false;
+      });
+      return;
+    }
+
+    // Check email domain
+    if (!email.endsWith("cmritonline.ac.in") && !email.endsWith("cmrithyderabad.edu.in")) {
+      showToast(message: "Email must end with online.ac.in or edu.in");
+      setState(() {
+        isSigningUp = false;
+      });
+      return;
+    }
+
+    // Validate password strength
+    if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$').hasMatch(password)) {
+      showToast(message: "Password must be at least 8 characters long, include an uppercase letter, a number, and a special character");
       setState(() {
         isSigningUp = false;
       });
@@ -210,6 +228,15 @@ class _SignUpPageState extends State<SignUpPage> {
         isSigningUp = false;
       });
       return;
+    }
+
+    //Check if mobile number is right or not
+    if(phoneNumber.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phoneNumber)){
+        showToast(message: "Please enter only numbers with length 10");
+        setState(() {
+          isSigningUp = false;
+        });
+        return;
     }
 
     User? user = await _auth.signUpWithEmailAndPassword(

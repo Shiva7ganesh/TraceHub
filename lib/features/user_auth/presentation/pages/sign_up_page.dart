@@ -202,7 +202,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
     // Check email domain
     if (!email.endsWith("cmritonline.ac.in") && !email.endsWith("cmrithyderabad.edu.in")) {
-      showToast(message: "Email must end with online.ac.in or edu.in");
+      showToast(message: "Use organization or college mail");
       setState(() {
         isSigningUp = false;
       });

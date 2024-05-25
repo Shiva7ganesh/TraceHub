@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
@@ -6,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:insta_assets_picker/insta_assets_picker.dart';
 import 'package:intl/intl.dart';
 
 import 'MyHomePage.dart';
@@ -41,21 +43,60 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
   }
 
   Future<void> _addImage() async {
-    final picker = ImagePicker();
-
     try {
-      List<XFile>? pickedImages = await picker.pickMultiImage();
-
-      if (pickedImages == null || pickedImages.isEmpty) {
+      final pickedAssets = await InstaAssetPicker.pickAssets(
+        context,
+        title: 'Select images',
+        maxAssets: 2,
+        onCompleted: (Stream<InstaAssetsExportDetails> stream) async {
+          await for (InstaAssetsExportDetails details in stream) {
+            setState(() {
+              _pickedImages.addAll(details.croppedFiles);
+            });
+            if (_pickedImages.length > 1) {
+              _pickedImages.removeAt(0);
+            }
+          }
+          Navigator.pop(context);
+        },
+      );
+      if (pickedAssets == null || pickedAssets.isEmpty) {
         return;
       }
-
-      setState(() {
-        _pickedImages.addAll(pickedImages.map((image) => File(image.path)));
-      });
+      for (int i = 0; i < _pickedImages.length; i++) {
+        File compressedImage = await _compressImage(_pickedImages[i]);
+        _pickedImages[i] = compressedImage;
+      }
     } catch (e) {
       print('Error picking images: $e');
     }
+  }
+
+  Future<File> _compressImage(File image) async {
+    // Check the size of the image
+    int maxSizeInBytes = 500 * 1024; // 500 KB
+    int fileSizeInBytes = await image.length();
+    if (fileSizeInBytes <= maxSizeInBytes) {
+      // If image is already below 500KB, return original image
+      return image;
+    }
+
+    // Compress the image
+    Uint8List? compressedImageBytes = await FlutterImageCompress.compressWithFile(
+      image.path,
+      quality: 70, // Adjust the quality as needed
+    );
+
+    if (compressedImageBytes == null) {
+      // Compression failed, return original image
+      return image;
+    }
+
+    // Save the compressed image to a new file
+    File compressedImage = File('${image.path}_compressed.jpg');
+    await compressedImage.writeAsBytes(compressedImageBytes);
+
+    return compressedImage;
   }
 
   Future<void> _takePicture() async {
@@ -102,9 +143,17 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
 
-      // Combine selected date and time into a single DateTime object
-      DateTime combinedDateTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day,
-          selectedTime!.hour, selectedTime!.minute);
+      // Allow dateTimeFound to be null if neither date nor time is selected
+      DateTime? combinedDateTime;
+      if (selectedDate != null || selectedTime != null) {
+        combinedDateTime = DateTime(
+          selectedDate?.year ?? DateTime.now().year,
+          selectedDate?.month ?? DateTime.now().month,
+          selectedDate?.day ?? DateTime.now().day,
+          selectedTime?.hour ?? 0,
+          selectedTime?.minute ?? 0,
+        );
+      }
 
       await Items.add({
         'itemName': itemName,
@@ -116,7 +165,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
         'organizationId': 'CMRIT',
         'timestamp': FieldValue.serverTimestamp(),
         'dateTimeFound': combinedDateTime,
-        'Itemtype':'Found',// Store combined DateTime in Firestore
+        'Itemtype': 'Found', // Store combined DateTime in Firestore
       });
 
       _clearForm();
@@ -128,12 +177,12 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
           content: Text('Your found item has been submitted successfully.'),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MyHomePage(),
-                ),
-              ),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => MyHomePage()),
+                      (Route<dynamic> route) => false,
+                );
+              },
               child: Text('OK'),
             ),
           ],
@@ -199,7 +248,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime.now(),
     );
 
     if (pickedDate != null && pickedDate != selectedDate) {
@@ -316,7 +365,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
               SizedBox(height: 16.0),
               TextFormField(
                 decoration: InputDecoration(
-                    labelText: 'Contact Information (Mandatory)'),
+                    labelText: 'Relevant Contact Information to Take Back'),
                 onChanged: (value) {
                   setState(() {
                     contactInfo = value;

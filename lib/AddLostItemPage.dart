@@ -3,9 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:insta_assets_picker/insta_assets_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:intl/intl.dart';
 
 import 'MyHomePage.dart';
@@ -41,24 +40,43 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
   }
 
   Future<void> _addImage() async {
-    final picker = ImagePicker();
-
     try {
-      List<XFile>? pickedImages = await picker.pickMultiImage();
-
-      if (pickedImages == null || pickedImages.isEmpty) {
+      final pickedAssets = await InstaAssetPicker.pickAssets(
+        context,
+        title: 'Select images',
+        maxAssets: 2,
+        onCompleted: (Stream<InstaAssetsExportDetails> stream) async {
+          await for (InstaAssetsExportDetails details in stream) {
+            setState(() {
+              _pickedImages.addAll(details.croppedFiles);
+            });
+            if(_pickedImages.length>1)
+              {
+                _pickedImages.removeAt(0);
+              }
+          }
+          Navigator.pop(context);
+        },
+      );
+      if (pickedAssets == null || pickedAssets.isEmpty) {
         return;
       }
-
-      setState(() {
-        _pickedImages.addAll(pickedImages.map((image) => File(image.path)));
-      });
     } catch (e) {
       print('Error picking images: $e');
     }
   }
+
   Future<void> _submitPost() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (selectedDate == null || selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please select both date and time.'),
+        ),
+      );
       return;
     }
 
@@ -69,26 +87,30 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
     try {
       final imageUrls = await _uploadImages();
 
-      final Items = FirebaseFirestore.instance.collection('items');
+      final items = FirebaseFirestore.instance.collection('items');
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
 
-      // Combine selected date and time into a single DateTime object
-      DateTime combinedDateTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day,
-          selectedTime!.hour, selectedTime!.minute);
+      DateTime combinedDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+        selectedTime!.hour,
+        selectedTime!.minute,
+      );
 
-      await Items.add({
+      await items.add({
         'itemName': itemName,
         'description': description,
         'placeLost': placeLost,
         'contactInfo': contactInfo,
         'images': imageUrls,
         'userId': userId,
-        'organizationId': 'CMRIT',
+        'organizationId': organizationId,
         'timestamp': FieldValue.serverTimestamp(),
         'dateTimeLost': combinedDateTime,
-        'Itemtype':'Lost',// Store combined DateTime in Firestore
+        'Itemtype': 'Lost',
       });
 
       _clearForm();
@@ -97,15 +119,15 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
         context: context,
         builder: (BuildContext context) => AlertDialog(
           title: Text('Submitted Successfully'),
-          content: Text('Your Lost item has been submitted successfully.'),
+          content: Text('Your lost item has been submitted successfully.'),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MyHomePage(),
-                ),
-              ),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => MyHomePage()),
+                      (Route<dynamic> route) => false,
+                );
+              },
               child: Text('OK'),
             ),
           ],
@@ -132,6 +154,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       });
     }
   }
+
   Future<List<String>> _uploadImages() async {
     final imageUrls = <String>[];
 
@@ -143,7 +166,9 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
             .ref()
             .child('images/$imageName');
 
-        await ref.putFile(image);
+        final compressedImage = await _compressImage(image);
+
+        await ref.putFile(compressedImage);
 
         final imageUrl = await ref.getDownloadURL();
 
@@ -156,6 +181,22 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
     return imageUrls;
   }
 
+  Future<File> _compressImage(File file) async {
+    final filePath = file.absolute.path;
+    final outPath = filePath.substring(0, filePath.lastIndexOf('.')) + '_compressed.jpg';
+
+    final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
+      filePath,
+      outPath,
+      quality: 85, // Adjust quality to maintain image size below 500KB
+    );
+
+    if (compressedXFile != null) {
+      return File(compressedXFile.path);
+    } else {
+      return file;
+    }
+  }
   void _clearForm() {
     setState(() {
       itemName = '';
@@ -163,6 +204,8 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       placeLost = '';
       contactInfo = '';
       _pickedImages.clear();
+      selectedDate = null;
+      selectedTime = null;
     });
   }
 
@@ -171,7 +214,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime.now(),
     );
 
     if (pickedDate != null && pickedDate != selectedDate) {
@@ -266,6 +309,12 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                     description = value;
                   });
                 },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Description is required';
+                  }
+                  return null;
+                },
               ),
               SizedBox(height: 16.0),
               TextFormField(
@@ -275,11 +324,16 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                     placeLost = value;
                   });
                 },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Place lost is required';
+                  }
+                  return null;
+                },
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                decoration: InputDecoration(
-                    labelText: 'Contact Information (Mandatory)'),
+                decoration: InputDecoration(labelText: 'Contact Information to Contact'),
                 onChanged: (value) {
                   setState(() {
                     contactInfo = value;
@@ -287,12 +341,14 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Contact information is required';
+                    return 'Contact info is required';
+                  }
+                  else if( value.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(value)){
+                    return 'Enter Valid number';
                   }
                   return null;
                 },
               ),
-              SizedBox(height: 16.0),
               ListTile(
                 title: Text(
                   'Date Lost',
@@ -300,7 +356,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 ),
                 subtitle: Text(selectedDate == null
                     ? 'Select Date'
-                    : DateFormat('yyyy-MM-dd').format(selectedDate!)),
+                    : DateFormat.yMd().format(selectedDate!)),
                 onTap: () => _selectDate(context),
               ),
               ListTile(

@@ -129,9 +129,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   SizedBox(height: 30),
                   GestureDetector(
-                    onTap: () {
-                      _signUp();
-                    },
+                    onTap: _signUp,
                     child: Container(
                       width: double.infinity,
                       height: 45,
@@ -161,7 +159,8 @@ class _SignUpPageState extends State<SignUpPage> {
                         onTap: () {
                           Navigator.pushAndRemoveUntil(
                               context,
-                              MaterialPageRoute(builder: (context) => LoginPage()),
+                              MaterialPageRoute(
+                                  builder: (context) => LoginPage()),
                                   (route) => false);
                         },
                         child: Text(
@@ -230,40 +229,51 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    //Check if mobile number is right or not
-    if(phoneNumber.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phoneNumber)){
-        showToast(message: "Please enter only numbers with length 10");
-        setState(() {
-          isSigningUp = false;
-        });
-        return;
+    // Check if mobile number is valid
+    if (phoneNumber.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phoneNumber)) {
+      showToast(message: "Please enter only numbers with length 10");
+      setState(() {
+        isSigningUp = false;
+      });
+      return;
     }
 
-    User? user = await _auth.signUpWithEmailAndPassword(
-      email: email,
-      password: password,
-      username: username,
-      phoneNumber: phoneNumber,
-    );
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      User? user = userCredential.user;
+
+      if (user != null) {
+        // Send email verification
+        await user.sendEmailVerification();
+
+        // Store the Firebase user ID along with other user details
+        FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'username': username,
+          'email': email,
+          'phoneNumber': phoneNumber,
+          'organization': _selectedOrganization,
+        });
+
+        showToast(message: "User is successfully created. Please verify your email.");
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+              (route) => false,
+        );
+      } else {
+        showToast(message: "Some error happened");
+      }
+    } catch (e) {
+      showToast(message: e.toString());
+    }
 
     setState(() {
       isSigningUp = false;
     });
-
-    if (user != null) {
-      showToast(message: "User is successfully created");
-
-      // Store the Firebase user ID along with other user details
-      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'username': username,
-        'email': email,
-        'phoneNumber': phoneNumber,
-        'organization': _selectedOrganization,
-      });
-
-      Navigator.pushNamed(context, "/home");
-    } else {
-      showToast(message: "Some error happened");
-    }
   }
 }

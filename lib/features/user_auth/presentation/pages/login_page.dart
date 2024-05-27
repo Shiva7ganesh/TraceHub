@@ -249,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (userCredential != null) {
       showToast(message: "User is successfully signed in");
-      Navigator.pushReplacementNamed(context, "/home");
+      Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
     } else {
       showToast(message: "Some error occurred");
     }
@@ -301,7 +301,7 @@ class _LoginPageState extends State<LoginPage> {
             // Add other fields as needed
           });
 
-          Navigator.pushNamed(context, "/home");
+          Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
         } else {
           // Sign out the user if the email is not valid
           await _googleSignIn.signOut();

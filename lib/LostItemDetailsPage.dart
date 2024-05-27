@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -18,8 +19,7 @@ class LostItemDetailsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Lost Item Details'),
-        actions: [
-          if (isOwner)
+          actions: [
             IconButton(
               icon: Icon(Icons.delete),
               onPressed: () async {
@@ -44,14 +44,46 @@ class LostItemDetailsPage extends StatelessWidget {
                 ) ?? false;
 
                 if (confirmed) {
-                  await FirebaseFirestore.instance.runTransaction((Transaction myTransaction) async {
-                    myTransaction.delete(item.reference);
-                  });
-                  Navigator.of(context).pop();
+                  // Show loading indicator
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (BuildContext context) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    },
+                  );
+
+                  try {
+                    // Delete images from storage
+                    List<dynamic> images = item['images'] ?? [];
+                    for (String imageUrl in images) {
+                      await _deleteImageFromStorage(imageUrl);
+                    }
+
+                    // Delete item from Firestore
+                    await FirebaseFirestore.instance.runTransaction((Transaction myTransaction) async {
+                      myTransaction.delete(item.reference);
+                    });
+
+                    Navigator.of(context).pop(); // Close the loading indicator
+                    Navigator.of(context).pop(); // Go back to the previous screen
+
+                    // Show confirmation message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Post deleted successfully')),
+                    );
+                  } catch (e) {
+                    Navigator.of(context).pop(); // Close the loading indicator
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error deleting post: $e')),
+                    );
+                  }
                 }
               },
             ),
-        ],
+          ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -79,7 +111,7 @@ class LostItemDetailsPage extends StatelessWidget {
               )
                   : Center(
                 child: Text(
-                  'Image not available',
+                  'Image Not Available',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -201,5 +233,15 @@ class LostItemDetailsPage extends StatelessWidget {
       return '$n';
     }
     return '0$n';
+  }
+
+  // Helper function to delete images from Firebase Storage
+  Future<void> _deleteImageFromStorage(String imageUrl) async {
+    try {
+      final firebase_storage.Reference storageRef = firebase_storage.FirebaseStorage.instance.refFromURL(imageUrl);
+      await storageRef.delete();
+    } catch (e) {
+      print('Error deleting image from storage: $e');
+    }
   }
 }

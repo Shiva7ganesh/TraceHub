@@ -79,7 +79,7 @@ class FoundItemsPage extends StatelessWidget {
                                 if (imageUrl == null)
                                   Center(
                                     child: Text(
-                                      'Image not available',
+                                      'Image Not Available',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 20,

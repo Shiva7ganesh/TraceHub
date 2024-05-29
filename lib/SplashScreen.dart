@@ -29,13 +29,13 @@ class _SplashScreenState extends State<SplashScreen> {
         parts.length > 1 ? parts[1] : ''; // Handle case when there's no comma
 
     return Scaffold(
-      backgroundColor: Colors.black, // Change the background color as needed
+      backgroundColor: Colors.white, // Change the background color as needed
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/splash_image.png', // Replace 'splash_image.jpg' with your image asset
+              'assets/loginpage.png', // Replace 'splash_image.jpg' with your image asset
               width: 2000, // Adjust width as needed
             ),
             const SizedBox(height: 10),
@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   firstPart.trim(),
                   style: TextStyle(
                     fontSize: 24,
-                    color: Colors.white,
+                    color: Colors.black,
                     fontFamily:
                         'HandwrittenFont', // Change text color as needed
                   ),
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   secondPart.trim(),
                   style: TextStyle(
                     fontSize: 24,
-                    color: Colors.white, // Change text color as needed
+                    color: Colors.black, // Change text color as needed
                   ),
                 ),
               ],

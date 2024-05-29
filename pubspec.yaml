@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+3
+version: 1.0.0+6
 
 environment:
   sdk: '>=3.2.5 <4.0.0'
@@ -47,12 +47,14 @@ dependencies:
   google_sign_in: ^6.1.5
   flutter_cache_manager: ^3.2.0
   cached_network_image: ^3.2.0
-  image_cropper: ^5.0.1
+  image_cropper: ^6.0.0
   flutter_image_compress: ^2.1.0
   insta_assets_picker: ^2.2.1
-  wechat_assets_picker: 9.0.0-dev.2
-  permission_handler: ^10.3.0
-  intl: ^0.17.0
+  wechat_assets_picker: ^9.0.3
+  permission_handler: ^11.3.1
+  intl: ^0.19.0
+  flutter_native_splash: ^2.4.0
+
 
 
 dependency_overrides:
@@ -61,15 +63,15 @@ dependency_overrides:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  image_picker: ^0.8.3
+  image_picker: ^1.1.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
-  google_fonts: 6.1.0
+  flutter_lints: ^4.0.0
+  google_fonts: ^6.2.0
 
 
 # For information on the generic Dart part of this file, see the

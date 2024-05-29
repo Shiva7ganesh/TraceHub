@@ -20,6 +20,7 @@ class LostItemDetailsPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Lost Item Details'),
           actions: [
+            if (isOwner)
             IconButton(
               icon: Icon(Icons.delete),
               onPressed: () async {

@@ -5,6 +5,7 @@ import 'package:lostandfound/features/user_auth/firebase_auth_implementation/fir
 import 'package:lostandfound/features/user_auth/presentation/pages/login_page.dart';
 import 'package:lostandfound/features/user_auth/presentation/widgets/form_container_widget.dart';
 import 'package:lostandfound/global/common/toast.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -32,6 +33,28 @@ class _SignUpPageState extends State<SignUpPage> {
     _passwordController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
+  }
+
+  void showToast({
+    required String message,
+    ToastGravity gravity = ToastGravity.BOTTOM,
+    int durationInSeconds = 5,
+  }) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      // Display the toast for as long as possible
+      gravity: gravity,
+      timeInSecForIosWeb: durationInSeconds,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+
+    // Manually dismiss the toast after the specified duration
+    Future.delayed(Duration(seconds: durationInSeconds), () {
+      Fluttertoast.cancel();
+    });
   }
 
   @override
@@ -62,7 +85,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: _organizationDropdownError ? Colors.red[100] : Colors.white,
+                      color: _organizationDropdownError
+                          ? Colors.red[100]
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -127,7 +152,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "Mobile Number",
                     isPasswordField: false,
                   ),
-                  SizedBox(height: 30),
+                  SizedBox(height: 20),
                   GestureDetector(
                     onTap: _signUp,
                     child: Container(
@@ -150,6 +175,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   SizedBox(height: 20),
+                  Text(
+                    "Please use your organization email to login",
+                    style: TextStyle(fontSize: 15, color: Colors.black),
+                  ),
+                  SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -168,9 +198,25 @@ class _SignUpPageState extends State<SignUpPage> {
                           style: TextStyle(
                               color: Colors.blue, fontWeight: FontWeight.bold),
                         ),
-                      )
+                      ),
                     ],
-                  )
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Didn't receive verification email?"),
+                      SizedBox(width: 5),
+                      GestureDetector(
+                        onTap: _resendVerificationEmail,
+                        child: Text(
+                          "Resend Link",
+                          style: TextStyle(
+                              color: Colors.blue, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             )
@@ -191,7 +237,8 @@ class _SignUpPageState extends State<SignUpPage> {
     String phoneNumber = _phoneNumberController.text.trim();
 
     // Validate username, email, password, and mobile number
-    if (username.isEmpty || email.isEmpty || password.isEmpty || phoneNumber.isEmpty) {
+    if (username.isEmpty || email.isEmpty || password.isEmpty ||
+        phoneNumber.isEmpty) {
       showToast(message: "Please enter valid details");
       setState(() {
         isSigningUp = false;
@@ -200,7 +247,8 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     // Check email domain
-    if (!email.endsWith("cmritonline.ac.in") && !email.endsWith("cmrithyderabad.edu.in")) {
+    if (!email.endsWith("cmritonline.ac.in") &&
+        !email.endsWith("cmrithyderabad.edu.in")) {
       showToast(message: "Use organization or college mail");
       setState(() {
         isSigningUp = false;
@@ -209,8 +257,11 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     // Validate password strength
-    if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$').hasMatch(password)) {
-      showToast(message: "Password must be at least 8 characters long, include an uppercase letter, a number, and a special character");
+    if (!RegExp(
+        r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
+        .hasMatch(password)) {
+      showToast(
+          message: "Password must be at least 8 characters long, include an uppercase letter, a number, and a special character");
       setState(() {
         isSigningUp = false;
       });
@@ -230,8 +281,8 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     // Check if mobile number is valid
-    if (phoneNumber.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phoneNumber)) {
-      showToast(message: "Please enter only numbers with length 10");
+    if (!RegExp(r'^\d{10}$').hasMatch(phoneNumber)) {
+      showToast(message: "Please enter a valid 10-digit mobile number");
       setState(() {
         isSigningUp = false;
       });
@@ -239,7 +290,8 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -258,7 +310,8 @@ class _SignUpPageState extends State<SignUpPage> {
           'organization': _selectedOrganization,
         });
 
-        showToast(message: "User is successfully created. Please verify your email.");
+        showToast(
+            message: "User is successfully created. Please verify your email.");
 
         Navigator.pushAndRemoveUntil(
           context,
@@ -275,5 +328,50 @@ class _SignUpPageState extends State<SignUpPage> {
     setState(() {
       isSigningUp = false;
     });
+  }
+
+  void _resendVerificationEmail() async {
+    try {
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
+      if (email.isEmpty || password.isEmpty) {
+        showToast(message: "Please enter both email and password.");
+        return;
+      }
+      // Attempt to sign in with the email and password
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      User? user = userCredential.user;
+
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        showToast(
+            message: "Verification email resent. Please check your inbox.");
+      } else if (user != null && user.emailVerified) {
+        showToast(message: "Email is already verified.");
+      } else {
+        showToast(message: "No user found. Please sign up first.");
+      }
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        switch (e) {
+          case 'user-not-found':
+            showToast(message: "No user found for that email.");
+            break;
+          case 'The supplied auth credential is incorrect, malformed or has expired.':
+            showToast(message: "Wrong password provided.");
+            break;
+          default:
+            showToast(message: "Failed to resend verification email. Error: ${e
+                .message}");
+        }
+      } else {
+        showToast(message: "An unexpected error occurred. Please try again.");
+      }
+    }
   }
 }

@@ -11,6 +11,21 @@ import 'package:simple_speed_dial/simple_speed_dial.dart';
 class UserProfilePage extends StatelessWidget {
   final GoogleSignIn _googleSignIn = GoogleSignIn(); // Initialize Google Sign-In
 
+  Future<Map<String, dynamic>?> _fetchUserData(String userId) async {
+    try {
+      DocumentSnapshot userDoc =
+      await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return userDoc.data() as Map<String, dynamic>?;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -27,7 +42,8 @@ class UserProfilePage extends StatelessWidget {
             onPressed: () async {
               await _googleSignIn.signOut(); // Sign out from Google
               await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacementNamed(context, '/login'); // Adjust the route to your home or login page
+              Navigator.pushReplacementNamed(
+                  context, '/login'); // Adjust the route to your home or login page
             },
           )
               : IconButton(
@@ -42,12 +58,9 @@ class UserProfilePage extends StatelessWidget {
           ? Center(
         child: Text('No user is signed in'),
       )
-          : StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection('items')
-            .where('userId', isEqualTo: user.uid)
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          : FutureBuilder<Map<String, dynamic>?>(
+        future: _fetchUserData(user.uid),
+        builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>?> snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
@@ -56,7 +69,8 @@ class UserProfilePage extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
 
-          var userItems = snapshot.data?.docs ?? [];
+          var userData = snapshot.data;
+          var username = userData != null ? userData['username'] : 'No Username';
 
           return SingleChildScrollView(
             child: Column(
@@ -65,7 +79,7 @@ class UserProfilePage extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
-                    'Welcome,\n${user.displayName ?? 'No Username'}',
+                    'Welcome,\n$username',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -76,97 +90,115 @@ class UserProfilePage extends StatelessWidget {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: userItems.length,
-                  itemBuilder: (context, index) {
-                    var item = userItems[index];
-                    var itemName = item['itemName'];
-                    var itemDescription = item['description'];
-                    var imageUrl = item['images'] != null && item['images'].isNotEmpty
-                        ? item['images'][0]
-                        : null;
-                    var itemType = item['Itemtype'] == 'Found' ? 'Found item' : 'Lost item';
+                StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection('items')
+                      .where('userId', isEqualTo: user.uid)
+                      .snapshots(),
+                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
 
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              if (item['Itemtype'] == 'Found') {
-                                return FoundItemDetailsPage(item: item);
-                              } else {
-                                return LostItemDetailsPage(item: item);
-                              }
-                            },
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    var userItems = snapshot.data?.docs ?? [];
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: userItems.length,
+                      itemBuilder: (context, index) {
+                        var item = userItems[index];
+                        var itemName = item['itemName'];
+                        var itemDescription = item['description'];
+                        var imageUrl = item['images'] != null && item['images'].isNotEmpty
+                            ? item['images'][0]
+                            : null;
+                        var itemType = item['Itemtype'] == 'Found' ? 'Found item' : 'Lost item';
+
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  if (item['Itemtype'] == 'Found') {
+                                    return FoundItemDetailsPage(item: item);
+                                  } else {
+                                    return LostItemDetailsPage(item: item);
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                          child: Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  AspectRatio(
+                                    aspectRatio: 1,
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          if (imageUrl != null)
+                                            Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.cover,
+                                              loadingBuilder: (context, child, loadingProgress) {
+                                                return AnimatedSwitcher(
+                                                  duration: Duration(milliseconds: 300),
+                                                  child: loadingProgress == null
+                                                      ? child
+                                                      : Center(
+                                                    child: CircularProgressIndicator(),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          if (imageUrl == null)
+                                            Center(
+                                              child: Text(
+                                                'Image not available',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16.0),
+                                  Text(
+                                    itemType,
+                                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  ),
+                                  SizedBox(height: 8.0),
+                                  Text(
+                                    itemName ?? '',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                  SizedBox(height: 8.0),
+                                  Text(
+                                    itemDescription ?? '',
+                                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         );
                       },
-                      child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              AspectRatio(
-                                aspectRatio: 1,
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey,
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      if (imageUrl != null)
-                                        Image.network(
-                                          imageUrl,
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            return AnimatedSwitcher(
-                                              duration: Duration(milliseconds: 300),
-                                              child: loadingProgress == null
-                                                  ? child
-                                                  : Center(
-                                                child: CircularProgressIndicator(),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      if (imageUrl == null)
-                                        Center(
-                                          child: Text(
-                                            'Image not available',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 16.0),
-                              Text(
-                                itemType,
-                                style: TextStyle(fontSize: 16, color: Colors.grey),
-                              ),
-                              SizedBox(height: 8.0),
-                              Text(
-                                itemName ?? '',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                              ),
-                              SizedBox(height: 8.0),
-                              Text(
-                                itemDescription ?? '',
-                                style: TextStyle(color: Colors.grey, fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     );
                   },
                 ),

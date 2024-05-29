@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lostandfound/MyHomePage.dart';
 import '../../user_auth/presentation/pages/login_page.dart';
@@ -16,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 2), () {
+    Timer(const Duration(seconds: 1), () {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         Navigator.pushReplacement(
@@ -43,48 +42,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final text = '"DISCOVER THE LOST,. RETURN THE FOUND"';
-    final parts = text.split('.'); // Split text into two parts based on comma
-    final firstPart = parts[0];
-    final secondPart =
-    parts.length > 1 ? parts[1] : ''; // Handle case when there's no comma
-
     return Scaffold(
-      backgroundColor: Colors.black, // Change the background color as needed
+      backgroundColor: Colors.white,
       body: Center(
         child: AnimatedOpacity(
           opacity: _opacity,
           duration: Duration(milliseconds: 800),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/splash_image.png', // Replace 'splash_image.jpg' with your image asset
-                width: 2000, // Adjust width as needed
-              ),
-              const SizedBox(height: 10),
-              Column(
-                children: [
-                  Text(
-                    firstPart.trim(),
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      fontFamily:
-                      'HandwrittenFont', // Change text color as needed
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    secondPart.trim(),
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white, // Change text color as needed
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          child: Image.asset(
+            'assets/loginpage.png', // Replace with your image asset
+            width: 200, // Adjust width as needed
+            height: 200, // Adjust height as needed
+            fit: BoxFit.contain,
           ),
         ),
       ),

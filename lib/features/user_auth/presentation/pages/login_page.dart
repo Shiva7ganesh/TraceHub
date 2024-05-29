@@ -16,6 +16,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isSigning = false;
+  bool _isGoogleSigning = false;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
@@ -49,8 +50,7 @@ class _LoginPageState extends State<LoginPage> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: _organizationDropdownError ? Colors.red[100] : Colors
-                        .white,
+                    color: _organizationDropdownError ? Colors.red[100] : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -143,7 +143,11 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Center(
-                      child: Row(
+                      child: _isGoogleSigning
+                          ? CircularProgressIndicator(
+                        color: Colors.white,
+                      )
+                      :Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
@@ -169,37 +173,52 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 15, color: Colors.black),
                 ),
                 SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Don't have an account?"),
+                    SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUpPage()),
+                              (route) => false,
+                        );
+                      },
+                      child: Text(
+                        "Sign Up",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Forgot password?"),
+                    SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: _resetPassword,
+                      child: Text(
+                        "Reset here",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
           Expanded(
             child: SizedBox(),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("Don't have an account?"),
-                SizedBox(width: 5),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()),
-                          (route) => false,
-                    );
-                  },
-                  child: Text(
-                    "Sign Up",
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
           SizedBox(height: 20),
         ],
@@ -239,30 +258,41 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
     } on FirebaseAuthException catch (e) {
-      print('Failed with error code: ${e.code}');
+      setState(() {
+        _isSigning = false;
+      });
+      showToast(message: 'Failed with error code: ${e.code}');
       print(e.message);
+      return;
     }
 
-    setState(() {
-      _isSigning = false;
-    });
-
     if (userCredential != null) {
+      if (!userCredential.user!.emailVerified) {
+        setState(() {
+          _isSigning = false;
+        });
+        showToast(message: "Please verify your email before logging in.");
+        return;
+      }
+
       showToast(message: "User is successfully signed in");
-      Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
+      _showPolicyDialog(); // Show the policy dialog before navigating to home
     } else {
+      setState(() {
+        _isSigning = false;
+      });
       showToast(message: "Some error occurred");
     }
   }
 
   _signInWithGoogle() async {
     setState(() {
-      _isSigning = true; // Set the flag to indicate signing in process started
+      _isGoogleSigning = true;
     });
     if (_selectedOrganization == null || _selectedOrganization!.isEmpty) {
       setState(() {
         _organizationDropdownError = true;
-        _isSigning = false;
+        _isGoogleSigning = false;
       });
       showToast(message: "Please select organization");
       return;
@@ -271,8 +301,7 @@ class _LoginPageState extends State<LoginPage> {
     final GoogleSignIn _googleSignIn = GoogleSignIn();
 
     try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn
-          .signIn();
+      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
 
       if (googleSignInAccount != null) {
         final GoogleSignInAuthentication googleSignInAuthentication =
@@ -301,12 +330,11 @@ class _LoginPageState extends State<LoginPage> {
             // Add other fields as needed
           });
 
-          Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
+          _showPolicyDialog(); // Show the policy dialog before navigating to home
         } else {
           // Sign out the user if the email is not valid
           await _googleSignIn.signOut();
-          showToast(
-              message: "Access denied. Please use a College email address.");
+          showToast(message: "Access denied. Please use a College email address.");
           // Reset the Google sign-in page
           Navigator.pushAndRemoveUntil(
             context,
@@ -319,9 +347,94 @@ class _LoginPageState extends State<LoginPage> {
       showToast(message: "Some error occurred: $e");
     } finally {
       setState(() {
-        _isSigning =
-        false; // Reset the signing flag after sign-in process is completed
+        _isGoogleSigning = false;
       });
     }
+  }
+
+  void _resetPassword() async {
+    String email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      showToast(message: "Please enter your email to reset password");
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      showToast(message: "Password reset link sent to your email");
+    } catch (e) {
+      showToast(message: e.toString());
+    }
+  }
+
+  void _showPolicyDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Important Notice',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'We would like to inform all members that TraceHub is not responsible for any personal belongings or issues encountered with other members of the community.',
+                    textAlign: TextAlign.justify,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'If you come across any valuable items, such as electronics or jewelry, please ensure they are handed over to the faculty or the Administrative Office (AO). Under no circumstances should these items be given directly to any individual without proper verification.',
+                    textAlign: TextAlign.justify,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Divider(
+                    color: Colors.black26,
+                    thickness: 1,
+                  ),
+                  Text(
+                    'Thank you for your cooperation.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Continue to Home Page'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

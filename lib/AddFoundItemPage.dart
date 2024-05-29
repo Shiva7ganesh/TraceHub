@@ -174,7 +174,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
         context: context,
         builder: (BuildContext context) => AlertDialog(
           title: Text('Submitted Successfully'),
-          content: Text('Your found item has been submitted successfully.'),
+          content: Text('Your found item has been submitted successfully.\nElectronics or jewelry? Please give them to the faculty or AO.'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -365,7 +365,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
               SizedBox(height: 16.0),
               TextFormField(
                 decoration: InputDecoration(
-                    labelText: 'Relevant Contact Information to Take Back'),
+                    labelText: 'Contact Info (Mobile No or e.g., Given to AO)'),
                 onChanged: (value) {
                   setState(() {
                     contactInfo = value;

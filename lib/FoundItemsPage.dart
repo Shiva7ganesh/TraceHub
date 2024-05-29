@@ -1,23 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'AddFoundItemPage.dart'; // Import your AddFoundItemPage widget here
-import 'AddLostItemPage.dart'; // Import your AddLostItemPage widget here
-import 'package:lostandfound/FoundItemDetailsPage.dart';
-import 'package:lostandfound/LostItemDetailsPage.dart';
+import 'AddFoundItemPage.dart';
+import 'AddLostItemPage.dart';
+import 'FoundItemDetailsPage.dart';
 
-class FoundItemsPage extends StatelessWidget {
+class FoundItemsPage extends StatefulWidget {
+  @override
+  _FoundItemsPageState createState() => _FoundItemsPageState();
+}
+
+class _FoundItemsPageState extends State<FoundItemsPage> {
+  String _searchQuery = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Found Items'),
-        automaticallyImplyLeading: false, // Update the title here
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: ItemSearchDelegate(),
+              ).then((query) {
+                if (query != null && query.isNotEmpty) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                }
+              });
+            },
+          ),
+        ],
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection('items')
             .where('Itemtype', isEqualTo: 'Found')
+            .orderBy('timestamp', descending: true) // Ensure proper sorting
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -28,19 +52,29 @@ class FoundItemsPage extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
 
+          var filteredDocs = snapshot.data!.docs.where((item) {
+            return item['itemName']
+                .toString()
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase());
+          }).toList();
+
+          if (filteredDocs.isEmpty) {
+            return Center(child: Text('No posts found'));
+          }
+
           return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
+            itemCount: filteredDocs.length,
             itemBuilder: (context, index) {
-              var item = snapshot.data!.docs[index];
+              var item = filteredDocs[index];
               var itemName = item['itemName'];
               var itemDescription = item['description'];
               var imageUrl = item['images'] != null && item['images'].isNotEmpty
                   ? item['images'][0]
-                  : null; // Assuming images are stored as an array
+                  : null;
 
               return GestureDetector(
                 onTap: () {
-                  // Navigate to FoundItemDetailsPage
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => FoundItemDetailsPage(item: item)),
@@ -53,11 +87,11 @@ class FoundItemsPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         AspectRatio(
-                          aspectRatio: 1, // Square aspect ratio
+                          aspectRatio: 1,
                           child: Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: Colors.grey, // Change the color here
+                              color: Colors.grey,
                             ),
                             child: Stack(
                               children: [
@@ -118,17 +152,17 @@ class FoundItemsPage extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddFoundItemPage()), // Navigate to AddFoundItemPage
+                MaterialPageRoute(builder: (context) => AddFoundItemPage()),
               );
             },
           ),
           SpeedDialChild(
-            child: const Icon(Icons.remove), // Change the icon to minus
+            child: const Icon(Icons.remove),
             label: 'Add Item Lost',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddLostItemPage()), // Navigate to AddLostItemPage
+                MaterialPageRoute(builder: (context) => AddLostItemPage()),
               );
             },
           ),
@@ -139,5 +173,43 @@ class FoundItemsPage extends StatelessWidget {
         openBackgroundColor: Colors.black,
       ),
     );
+  }
+}
+
+class ItemSearchDelegate extends SearchDelegate<String> {
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: AnimatedIcon(
+        icon: AnimatedIcons.menu_arrow,
+        progress: transitionAnimation,
+      ),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    close(context, query);
+    return Container();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return Container();
   }
 }

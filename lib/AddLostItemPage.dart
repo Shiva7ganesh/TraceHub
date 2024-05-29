@@ -107,7 +107,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
         'contactInfo': contactInfo,
         'images': imageUrls,
         'userId': userId,
-        'organizationId': organizationId,
+        'organizationId': 'CMRIT',
         'timestamp': FieldValue.serverTimestamp(),
         'dateTimeLost': combinedDateTime,
         'Itemtype': 'Lost',

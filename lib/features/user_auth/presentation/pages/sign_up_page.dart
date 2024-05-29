@@ -35,197 +35,177 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  void showToast({
-    required String message,
-    ToastGravity gravity = ToastGravity.BOTTOM,
-    int durationInSeconds = 5,
-  }) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_LONG,
-      // Display the toast for as long as possible
-      gravity: gravity,
-      timeInSecForIosWeb: durationInSeconds,
-      backgroundColor: Colors.black,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
-
-    // Manually dismiss the toast after the specified duration
-    Future.delayed(Duration(seconds: durationInSeconds), () {
-      Fluttertoast.cancel();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double padding = screenHeight * 0.02;
+    double spacing = screenHeight * 0.01;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/loginpage.png',
-                    height: 150,
-                    width: 150,
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "Sign Up",
-                    style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: _organizationDropdownError
-                          ? Colors.red[100]
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedOrganization,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedOrganization = value;
-                          _organizationDropdownError = false;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          setState(() {
-                            _organizationDropdownError = true;
-                          });
-                          return 'Please select organization';
-                        }
-                        return null;
-                      },
-                      items: [
-                        DropdownMenuItem(
-                          value: 'CMRIT',
-                          child: Text('CMR Institute Of Technology, Hyderabad'),
-                        ),
-                        // Add more organizations as needed
-                      ],
-                      decoration: InputDecoration(
-                        hintText: 'Select college/Organization',
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  FormContainerWidget(
-                    controller: _usernameController,
-                    hintText: "Username",
-                    isPasswordField: false,
-                  ),
-                  SizedBox(height: 10),
-                  FormContainerWidget(
-                    controller: _emailController,
-                    hintText: "Email",
-                    isPasswordField: false,
-                  ),
-                  SizedBox(height: 10),
-                  FormContainerWidget(
-                    controller: _passwordController,
-                    hintText: "Password",
-                    isPasswordField: true,
-                  ),
-                  SizedBox(height: 10),
-                  FormContainerWidget(
-                    controller: _phoneNumberController,
-                    hintText: "Mobile Number",
-                    isPasswordField: false,
-                  ),
-                  SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: _signUp,
-                    child: Container(
-                      width: double.infinity,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: isSigningUp
-                            ? CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                          "Sign Up",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "Please use your organization email to login",
-                    style: TextStyle(fontSize: 15, color: Colors.black),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Already have an account?"),
-                      SizedBox(width: 5),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => LoginPage()),
-                                  (route) => false);
-                        },
-                        child: Text(
-                          "Login",
-                          style: TextStyle(
-                              color: Colors.blue, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Didn't receive verification email?"),
-                      SizedBox(width: 5),
-                      GestureDetector(
-                        onTap: _resendVerificationEmail,
-                        child: Text(
-                          "Resend Link",
-                          style: TextStyle(
-                              color: Colors.blue, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Image.asset(
+                  'assets/loginpage.png',
+                  height: screenHeight * 0.2,
+                  width: screenWidth * 0.4,
+                ),
               ),
-            )
-          ],
+              SizedBox(height: spacing * 2),
+              Center(
+                child: Text(
+                  "Sign Up",
+                  style: TextStyle(fontSize: screenHeight * 0.035, fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(height: spacing * 2),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: padding),
+                decoration: BoxDecoration(
+                  color: _organizationDropdownError ? Colors.red[100] : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedOrganization,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedOrganization = value;
+                      _organizationDropdownError = false;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      setState(() {
+                        _organizationDropdownError = true;
+                      });
+                      return 'Please select organization';
+                    }
+                    return null;
+                  },
+                  items: [
+                    DropdownMenuItem(
+                      value: 'CMRIT',
+                      child: Text('CMR Institute Of Technology, Hyderabad'),
+                    ),
+                    // Add more organizations as needed
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Select college/Organization',
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: spacing * 2),
+              FormContainerWidget(
+                controller: _usernameController,
+                hintText: "Username",
+                isPasswordField: false,
+              ),
+              SizedBox(height: spacing),
+              FormContainerWidget(
+                controller: _emailController,
+                hintText: "Email",
+                isPasswordField: false,
+              ),
+              SizedBox(height: spacing),
+              FormContainerWidget(
+                controller: _passwordController,
+                hintText: "Password",
+                isPasswordField: true,
+              ),
+              SizedBox(height: spacing),
+              FormContainerWidget(
+                controller: _phoneNumberController,
+                hintText: "Mobile Number",
+                isPasswordField: false,
+              ),
+              SizedBox(height: spacing * 2),
+              GestureDetector(
+                onTap: _signUp,
+                child: Container(
+                  width: double.infinity,
+                  height: screenHeight * 0.06,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: isSigningUp
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                      "Sign Up",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: spacing * 2),
+              Center(
+                child: Text(
+                  "Please use your organization email to SignUp"),
+              ),
+              SizedBox(height: spacing * 2),
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Already have an account?"),
+                    SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                              (route) => false,
+                        );
+                      },
+                      child: Text(
+                        "Login",
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: spacing),
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Didn't receive verification email?"),
+                    SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: _resendVerificationEmail,
+                      child: Text(
+                        "Resend Link",
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
   void _signUp() async {
     setState(() {
       isSigningUp = true;
@@ -250,18 +230,6 @@ class _SignUpPageState extends State<SignUpPage> {
     if (!email.endsWith("cmritonline.ac.in") &&
         !email.endsWith("cmrithyderabad.edu.in")) {
       showToast(message: "Use organization or college mail");
-      setState(() {
-        isSigningUp = false;
-      });
-      return;
-    }
-
-    // Validate password strength
-    if (!RegExp(
-        r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
-        .hasMatch(password)) {
-      showToast(
-          message: "Password must be at least 8 characters long, include an uppercase letter, a number, and a special character");
       setState(() {
         isSigningUp = false;
       });

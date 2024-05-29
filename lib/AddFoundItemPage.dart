@@ -174,7 +174,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
         context: context,
         builder: (BuildContext context) => AlertDialog(
           title: Text('Submitted Successfully'),
-          content: Text('Your found item has been submitted successfully.\nElectronics or jewelry? Please give them to the faculty or AO.'),
+          content: Text('Your found item has been submitted successfully.\nValuable Items? Please give them to the faculty or AO.'),
           actions: <Widget>[
             TextButton(
               onPressed: () {

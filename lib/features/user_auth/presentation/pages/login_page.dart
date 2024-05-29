@@ -25,155 +25,151 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double padding = screenHeight * 0.02;
+    double spacing = screenHeight * 0.01;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Column(
-              children: [
-                Image.asset(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Image.asset(
                   'assets/loginpage.png',
-                  height: 150,
-                  width: 150,
+                  height: screenHeight * 0.2,
+                  width: screenWidth * 0.4,
                 ),
-                SizedBox(height: 20),
-                Text(
+              ),
+              SizedBox(height: spacing * 2),
+              Center(
+                child: Text(
                   "Login",
-                  style: TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: screenHeight * 0.035, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 20),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: _organizationDropdownError ? Colors.red[100] : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedOrganization,
-                    onChanged: (value) {
+              ),
+              SizedBox(height: spacing * 2),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: padding),
+                decoration: BoxDecoration(
+                  color: _organizationDropdownError ? Colors.red[100] : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedOrganization,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedOrganization = value;
+                      _organizationDropdownError = false;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
                       setState(() {
-                        _selectedOrganization = value;
-                        _organizationDropdownError = false;
+                        _organizationDropdownError = true;
                       });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        setState(() {
-                          _organizationDropdownError = true;
-                        });
-                        return 'Please select organization';
-                      }
-                      return null;
-                    },
-                    items: [
-                      DropdownMenuItem(
-                        value: 'CMRIT',
-                        child: Text('CMR Institute Of Technology, Hyderabad'),
-                      ),
-                      // Add more organizations as needed
-                    ],
-                    decoration: InputDecoration(
-                      hintText: 'Select college/Organization',
-                      border: InputBorder.none,
+                      return 'Please select organization';
+                    }
+                    return null;
+                  },
+                  items: [
+                    DropdownMenuItem(
+                      value: 'CMRIT',
+                      child: Text('CMR Institute Of Technology, Hyderabad'),
+                    ),
+                    // Add more organizations as needed
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Select College/Organization',
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: spacing * 2),
+              FormContainerWidget(
+                controller: _emailController,
+                hintText: "Email",
+                isPasswordField: false,
+              ),
+              SizedBox(height: spacing),
+              FormContainerWidget(
+                controller: _passwordController,
+                hintText: "Password",
+                isPasswordField: true,
+              ),
+              SizedBox(height: spacing * 2),
+              GestureDetector(
+                onTap: _signIn,
+                child: Container(
+                  width: double.infinity,
+                  height: screenHeight * 0.06,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: _isSigning
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                      "Login",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-                FormContainerWidget(
-                  controller: _emailController,
-                  hintText: "Email",
-                  isPasswordField: false,
-                ),
-                SizedBox(height: 10),
-                FormContainerWidget(
-                  controller: _passwordController,
-                  hintText: "Password",
-                  isPasswordField: true,
-                ),
-                SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () {
-                    _signIn();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Center(
-                      child: _isSigning
-                          ? CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                          : Text(
-                        "Login",
-                        style: TextStyle(
+              ),
+              SizedBox(height: spacing),
+              GestureDetector(
+                onTap: _signInWithGoogle,
+                child: Container(
+                  width: double.infinity,
+                  height: screenHeight * 0.06,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: _isGoogleSigning
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          FontAwesomeIcons.google,
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
+                        SizedBox(width: 5),
+                        Text(
+                          "Sign in with Google",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () {
-                    _signInWithGoogle();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Center(
-                      child: _isGoogleSigning
-                          ? CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                      :Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            FontAwesomeIcons.google,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 5),
-                          Text(
-                            "Sign in with Google",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+              ),
+              SizedBox(height: spacing * 2),
+              Center(
+                child: Text(
+                  "Please use your organization email to login"
                 ),
-                SizedBox(height: 20),
-                Text(
-                  "Please use your organization email to login",
-                  style: TextStyle(fontSize: 15, color: Colors.black),
-                ),
-                SizedBox(height: 20),
-                Row(
+              ),
+              SizedBox(height: spacing * 2),
+              Center(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("Don't have an account?"),
@@ -188,16 +184,15 @@ class _LoginPageState extends State<LoginPage> {
                       },
                       child: Text(
                         "Sign Up",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
-                Row(
+              ),
+              SizedBox(height: spacing),
+              Center(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("Forgot password?"),
@@ -206,26 +201,18 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: _resetPassword,
                       child: Text(
                         "Reset here",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Expanded(
-            child: SizedBox(),
-          ),
-          SizedBox(height: 20),
-        ],
+        ),
       ),
     );
   }
-
   void _signIn() async {
     setState(() {
       _isSigning = true;
@@ -334,6 +321,7 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // Sign out the user if the email is not valid
           await _googleSignIn.signOut();
+          await FirebaseAuth.instance.signOut();
           showToast(message: "Access denied. Please use a College email address.");
           // Reset the Google sign-in page
           Navigator.pushAndRemoveUntil(
@@ -413,7 +401,7 @@ class _LoginPageState extends State<LoginPage> {
                     thickness: 1,
                   ),
                   Text(
-                    'Thank you for your cooperation.',
+                    'Team Trace Hub',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black87,

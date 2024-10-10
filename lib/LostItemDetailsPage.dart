@@ -5,12 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class LostItemDetailsPage extends StatelessWidget {
   final QueryDocumentSnapshot item;
+  final bool isAdmin;
 
-  const LostItemDetailsPage({Key? key, required this.item}) : super(key: key);
+  const LostItemDetailsPage({Key? key, required this.item, required this.isAdmin}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Retrieve date and time from the item data
     Timestamp? timestamp = item['dateTimeLost'] as Timestamp?;
     DateTime? dateTimeLost = timestamp?.toDate();
     final User? currentUser = FirebaseAuth.instance.currentUser;
@@ -19,8 +19,8 @@ class LostItemDetailsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Lost Item Details'),
-          actions: [
-            if (isOwner)
+        actions: [
+          if (isOwner)
             IconButton(
               icon: Icon(Icons.delete),
               onPressed: () async {
@@ -45,7 +45,6 @@ class LostItemDetailsPage extends StatelessWidget {
                 ) ?? false;
 
                 if (confirmed) {
-                  // Show loading indicator
                   showDialog(
                     context: context,
                     barrierDismissible: false,
@@ -57,26 +56,23 @@ class LostItemDetailsPage extends StatelessWidget {
                   );
 
                   try {
-                    // Delete images from storage
                     List<dynamic> images = item['images'] ?? [];
                     for (String imageUrl in images) {
                       await _deleteImageFromStorage(imageUrl);
                     }
 
-                    // Delete item from Firestore
                     await FirebaseFirestore.instance.runTransaction((Transaction myTransaction) async {
                       myTransaction.delete(item.reference);
                     });
 
-                    Navigator.of(context).pop(); // Close the loading indicator
-                    Navigator.of(context).pop(); // Go back to the previous screen
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
 
-                    // Show confirmation message
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Post deleted successfully')),
                     );
                   } catch (e) {
-                    Navigator.of(context).pop(); // Close the loading indicator
+                    Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Error deleting post: $e')),
                     );
@@ -84,25 +80,24 @@ class LostItemDetailsPage extends StatelessWidget {
                 }
               },
             ),
-          ],
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Item images
             Container(
-              height: 400, // Increase the image container height
-              color: Colors.grey, // Set container color to grey
+              height: 400,
+              color: Colors.grey,
               child: item['images'] != null && item['images'].isNotEmpty
                   ? ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: item['images'].length,
-                separatorBuilder: (context, index) => SizedBox(width: 10), // Add a small gap between the images
+                separatorBuilder: (context, index) => SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   return Container(
-                    width: 400, // Set both width and height to maintain a square shape
-                    height: 400, // Set both width and height to maintain a square shape
+                    width: 400,
+                    height: 400,
                     child: Image.network(
                       item['images'][index] as String,
                       fit: BoxFit.cover,
@@ -118,7 +113,6 @@ class LostItemDetailsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            // Item name
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -141,7 +135,6 @@ class LostItemDetailsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            // Description
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -160,7 +153,6 @@ class LostItemDetailsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 10),
-            // Place lost
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -179,26 +171,24 @@ class LostItemDetailsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 10),
-            // Contact information
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Contact Information: ',
+                    'Handover To: ',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    item['contactInfo'] ?? 'No Contact Information',
+                    item['handoverTo'] ?? 'No Handover Information',
                     style: TextStyle(fontSize: 18),
                   ),
                 ],
               ),
             ),
             SizedBox(height: 10),
-            // Date and time lost
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -210,7 +200,6 @@ class LostItemDetailsPage extends StatelessWidget {
                   ),
                   SizedBox(height: 5),
                   Text(
-                    // Format the date and time manually
                     dateTimeLost != null
                         ? '${_formatTwoDigits(dateTimeLost.day)}-${_formatTwoDigits(dateTimeLost.month)}-${dateTimeLost.year} '
                         '${_formatTwoDigits(dateTimeLost.hour > 12 ? dateTimeLost.hour - 12 : dateTimeLost.hour)}:'
@@ -222,13 +211,60 @@ class LostItemDetailsPage extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(height: 10),
+            // New: Display user name and roll number if the current user is an admin
+            if (isAdmin)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Posted By: ',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 5),
+                    FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(item['userId']).get(),
+                      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        }
+
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          Map<String, dynamic>? data = snapshot.data?.data() as Map<String, dynamic>?;
+
+                          if (data != null) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Name: ${data['username'] ?? 'No Name'}',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                SizedBox(height: 5),
+                                Text(
+                                  'Email: ${data['email'] ?? 'No Email'}',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                SizedBox(height: 15),
+                              ],
+                            );
+                          }
+                        }
+
+                        return Text('Loading...');
+                      },
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // Helper function to format digits with leading zeros
   String _formatTwoDigits(int n) {
     if (n >= 10) {
       return '$n';
@@ -236,7 +272,6 @@ class LostItemDetailsPage extends StatelessWidget {
     return '0$n';
   }
 
-  // Helper function to delete images from Firebase Storage
   Future<void> _deleteImageFromStorage(String imageUrl) async {
     try {
       final firebase_storage.Reference storageRef = firebase_storage.FirebaseStorage.instance.refFromURL(imageUrl);

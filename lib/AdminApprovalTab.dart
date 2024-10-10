@@ -1,48 +1,65 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lostandfound/app_state.dart';
-import 'package:simple_speed_dial/simple_speed_dial.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'AddFoundItemPage.dart';
-import 'AddLostItemPage.dart';
-import 'FoundItemDetailsPage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:lostandfound/FoundItemDetailsPage.dart';
+import 'package:lostandfound/LostItemDetailsPage.dart';
+import 'package:lostandfound/app_state.dart';
 
-class FoundItemsPage extends StatefulWidget {
-  @override
-  _FoundItemsPageState createState() => _FoundItemsPageState();
+class AdminApprovalTab extends StatefulWidget {// Initialize Google Sign-In
+
+  Future<Map<String, dynamic>?> _fetchUserData(String userId) async {
+    try {
+      DocumentSnapshot userDoc =
+      await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return userDoc.data() as Map<String, dynamic>?;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+      return null;
+    }
+  }
+  _AdminApprovalTabState createState() => _AdminApprovalTabState();
 }
 
-class _FoundItemsPageState extends State<FoundItemsPage> {
+class _AdminApprovalTabState extends State<AdminApprovalTab> {
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Found Items'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: ItemSearchDelegate(),
-              ).then((query) {
-                if (query != null && query.isNotEmpty) {
-                  setState(() {
-                    _searchQuery = query;
-                  });
-                }
-              });
-            },
-          ),
-        ],
-      ),
+        appBar: AppBar(
+          title: Text('Pending Approvals'),
+          automaticallyImplyLeading: false,
+          actions: [
+            user != null
+                ? TextButton.icon(
+              icon: Icon(Icons.logout, color: Colors.black),
+              label: Text('Logout', style: TextStyle(color: Colors.black)),
+              onPressed: () async {
+                await _googleSignIn.signOut(); // Sign out from Google
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacementNamed(
+                    context, '/login'); // Adjust the route to your home or login page
+              },
+            )
+                : IconButton(
+              icon: Icon(Icons.login),
+              onPressed: () {
+                Navigator.pushNamed(context, '/login'); // Adjust the route to your login page
+              },
+            ),
+          ],
+        ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
-            .collection('itemscollection')
-            .where('Itemtype', isEqualTo: 'Found')
-            .orderBy('timestamp', descending: true) // Ensure proper sorting
+            .collection('temporaryItems')
+            .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
@@ -77,8 +94,17 @@ class _FoundItemsPageState extends State<FoundItemsPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FoundItemDetailsPage(item: item, isAdmin: AppState().isAdmin,)),
+                    MaterialPageRoute(
+                      builder: (context) {
+                        if (item['Itemtype'] == 'Found') {
+                          return FoundItemDetailsPage(item: item, isAdmin: AppState().isAdmin,);
+                        } else {
+                          return LostItemDetailsPage(item: item, isAdmin: AppState().isAdmin,);
+                        }
+                      },
+                    ),
                   );
+                  // Add any additional details navigation if needed
                 },
                 child: Card(
                   child: Padding(
@@ -134,6 +160,20 @@ class _FoundItemsPageState extends State<FoundItemsPage> {
                           itemDescription,
                           style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
+                        SizedBox(height: 8.0),
+                        Center(
+                          child:ElevatedButton(
+                            onPressed: () {
+                              approveItem(item.id, item.data() as Map<String, dynamic>);
+                            },
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                alignment: Alignment.center,
+                            ),
+                            child: Text('Approve'),
+                        ),
+                        ),
                       ],
                     ),
                   ),
@@ -143,36 +183,15 @@ class _FoundItemsPageState extends State<FoundItemsPage> {
           );
         },
       ),
-      floatingActionButton: SpeedDial(
-        child: const Icon(Icons.add),
-        speedDialChildren: <SpeedDialChild>[
-          SpeedDialChild(
-            child: const Icon(Icons.add),
-            label: 'Add Item Found',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddFoundItemPage()),
-              );
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.remove),
-            label: 'Add Item Lost',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddLostItemPage()),
-              );
-            },
-          ),
-        ],
-        closedForegroundColor: Colors.black,
-        openForegroundColor: Colors.white,
-        closedBackgroundColor: Colors.white,
-        openBackgroundColor: Colors.black,
-      ),
     );
+  }
+
+  void approveItem(String itemId, Map<String, dynamic> itemData) {
+    FirebaseFirestore.instance.collection('itemscollection').add(itemData).then((value) {
+      FirebaseFirestore.instance.collection('temporaryItems').doc(itemId).delete();
+    }).catchError((error) {
+      // Handle error
+    });
   }
 }
 

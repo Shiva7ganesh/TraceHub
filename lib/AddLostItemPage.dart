@@ -18,13 +18,16 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
   String itemName = '';
   String description = '';
   String placeLost = '';
-  String contactInfo = '';
+  String handoverTo = 'AO (Administrative Officer)';
   List<File> _pickedImages = [];
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   String? organizationId;
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
+  final List<String> handoverToOptions = [
+    'AO (Administrative Officer)'
+  ];
 
   @override
   void initState() {
@@ -50,10 +53,9 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
             setState(() {
               _pickedImages.addAll(details.croppedFiles);
             });
-            if(_pickedImages.length>1)
-              {
-                _pickedImages.removeAt(0);
-              }
+            if (_pickedImages.length > 1) {
+              _pickedImages.removeAt(0);
+            }
           }
           Navigator.pop(context);
         },
@@ -87,7 +89,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
     try {
       final imageUrls = await _uploadImages();
 
-      final items = FirebaseFirestore.instance.collection('items');
+      final items = FirebaseFirestore.instance.collection('itemscollection');
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
@@ -104,7 +106,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
         'itemName': itemName,
         'description': description,
         'placeLost': placeLost,
-        'contactInfo': contactInfo,
+        'handoverTo': handoverTo,
         'images': imageUrls,
         'userId': userId,
         'organizationId': 'CMRIT',
@@ -188,7 +190,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
     final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
       filePath,
       outPath,
-      quality: 85, // Adjust quality to maintain image size below 500KB
+      quality: 50, // Adjust quality to maintain image size below 500KB
     );
 
     if (compressedXFile != null) {
@@ -197,12 +199,18 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
       return file;
     }
   }
+
+  bool _containsPhoneNumber(String text) {
+    RegExp phoneNumberRegex = RegExp(r'\d{10}');
+    return phoneNumberRegex.hasMatch(text);
+  }
+
   void _clearForm() {
     setState(() {
       itemName = '';
       description = '';
       placeLost = '';
-      contactInfo = '';
+      handoverTo = '';
       _pickedImages.clear();
       selectedDate = null;
       selectedTime = null;
@@ -288,7 +296,7 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Item Name'),
+                decoration: InputDecoration(labelText: 'Item Name *'),
                 onChanged: (value) {
                   setState(() {
                     itemName = value;
@@ -297,13 +305,15 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Item name is required';
+                  } else if (_containsPhoneNumber(value)) {
+                    return 'Phone numbers are not allowed in the item name';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(labelText: 'Description *'),
                 onChanged: (value) {
                   setState(() {
                     description = value;
@@ -312,13 +322,15 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Description is required';
+                  } else if (_containsPhoneNumber(value)) {
+                    return 'Phone numbers are not allowed in the description';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Place Lost'),
+                decoration: InputDecoration(labelText: 'Place Lost *'),
                 onChanged: (value) {
                   setState(() {
                     placeLost = value;
@@ -327,27 +339,29 @@ class _AddLostItemPageState extends State<AddLostItemPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Place lost is required';
+                  } else if (_containsPhoneNumber(value)) {
+                    return 'Phone numbers are not allowed in the place lost';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16.0),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Contact Information to Contact'),
-                onChanged: (value) {
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Handover To',
+                ),
+                value: handoverTo,
+                onChanged: (newValue) {
                   setState(() {
-                    contactInfo = value;
+                    handoverTo = newValue!;
                   });
                 },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Contact info is required';
-                  }
-                  else if( value.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(value)){
-                    return 'Enter Valid number';
-                  }
-                  return null;
-                },
+                items: handoverToOptions.map((String option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option),
+                  );
+                }).toList(),
               ),
               ListTile(
                 title: Text(

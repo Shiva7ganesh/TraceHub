@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lostandfound/app_state.dart';
 
 class FoundItemDetailsPage extends StatelessWidget {
   final QueryDocumentSnapshot item;
+  final bool isAdmin; // New: Flag to determine if the user is an admin
 
-  const FoundItemDetailsPage({Key? key, required this.item}) : super(key: key);
+  const FoundItemDetailsPage({Key? key, required this.item, required this.isAdmin}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +22,8 @@ class FoundItemDetailsPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Found Item Details'),
         actions: [
+          // Show delete button only if the current user is the owner or an admin
+          if (isOwner || isAdmin)
             IconButton(
               icon: Icon(Icons.delete),
               onPressed: () async {
@@ -91,17 +95,17 @@ class FoundItemDetailsPage extends StatelessWidget {
           children: [
             // Item images
             Container(
-              height: 400, // Increase the image container height
-              color: Colors.grey, // Set container color to grey
+              height: 400,
+              color: Colors.grey,
               child: item['images'] != null && item['images'].isNotEmpty
                   ? ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: item['images'].length,
-                separatorBuilder: (context, index) => SizedBox(width: 10), // Add a small gap between the images
+                separatorBuilder: (context, index) => SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   return Container(
-                    width: 400, // Set both width and height to maintain a square shape
-                    height: 400, // Set both width and height to maintain a square shape
+                    width: 400,
+                    height: 400,
                     child: Image.network(
                       item['images'][index] as String,
                       fit: BoxFit.cover,
@@ -185,12 +189,12 @@ class FoundItemDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Contact Information: ',
+                    'Collect From: ', // Updated label to 'Collect From'
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    item['contactInfo'] ?? 'No Contact Information',
+                    item['collectFrom'] ?? 'No Collect From Information', // Updated to use 'collectFrom' field
                     style: TextStyle(fontSize: 18),
                   ),
                 ],
@@ -221,6 +225,55 @@ class FoundItemDetailsPage extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(height: 10),
+            // New: Display user name and roll number if the current user is an admin
+            if (isAdmin)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Posted By: ',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 5),
+                    FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(item['userId']).get(),
+                      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        }
+
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          Map<String, dynamic>? data = snapshot.data?.data() as Map<String, dynamic>?;
+
+                          if (data != null) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Name: ${data['username'] ?? 'No Name'}',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                SizedBox(height: 5),
+                                Text(
+                                  'Email: ${data['email'] ?? 'No Email'}',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                SizedBox(height: 15),
+                              ],
+                            );
+                          }
+                        }
+
+                        return Text('Loading...');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            SizedBox(height: 10),
           ],
         ),
       ),

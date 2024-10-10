@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lostandfound/app_state.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 import 'package:lostandfound/AddFoundItemPage.dart';
 import 'package:lostandfound/AddLostItemPage.dart';
 import 'package:lostandfound/FoundItemDetailsPage.dart';
 import 'package:lostandfound/LostItemDetailsPage.dart';
+import 'package:flutter/material.dart';
 
 class LostItemsPage extends StatefulWidget {
   @override
@@ -40,7 +42,7 @@ class _LostItemsPageState extends State<LostItemsPage> {
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
-            .collection('items')
+            .collection('itemscollection')
             .where('Itemtype', isEqualTo: 'Lost')
             .orderBy('timestamp', descending: true) // Ensure proper sorting
             .snapshots(),
@@ -77,7 +79,7 @@ class _LostItemsPageState extends State<LostItemsPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => LostItemDetailsPage(item: item)),
+                    MaterialPageRoute(builder: (context) => LostItemDetailsPage(item: item, isAdmin: AppState().isAdmin,)),
                   );
                 },
                 child: Card(
@@ -211,7 +213,9 @@ class ItemSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    close(context, query);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      close(context, query);
+    });
     return Container();
   }
 

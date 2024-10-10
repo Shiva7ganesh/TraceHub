@@ -9,6 +9,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:insta_assets_picker/insta_assets_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:lostandfound/app_state.dart';
 
 import 'MyHomePage.dart';
 
@@ -21,13 +22,16 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
   String itemName = '';
   String description = '';
   String placeFound = '';
-  String contactInfo = '';
+  String collectFrom = 'AO (Administrative Officer)';
   List<File> _pickedImages = [];
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   String? organizationId;
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
+  final List<String> collectFromOptions = [
+    'AO (Administrative Officer)'
+  ];
 
   @override
   void initState() {
@@ -73,26 +77,21 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
   }
 
   Future<File> _compressImage(File image) async {
-    // Check the size of the image
     int maxSizeInBytes = 500 * 1024; // 500 KB
     int fileSizeInBytes = await image.length();
     if (fileSizeInBytes <= maxSizeInBytes) {
-      // If image is already below 500KB, return original image
       return image;
     }
 
-    // Compress the image
     Uint8List? compressedImageBytes = await FlutterImageCompress.compressWithFile(
       image.path,
-      quality: 70, // Adjust the quality as needed
+      quality: 50, // Adjust the quality as needed
     );
 
     if (compressedImageBytes == null) {
-      // Compression failed, return original image
       return image;
     }
 
-    // Save the compressed image to a new file
     File compressedImage = File('${image.path}_compressed.jpg');
     await compressedImage.writeAsBytes(compressedImageBytes);
 
@@ -113,7 +112,7 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       final croppedImage = await imageCropper.cropImage(
         sourcePath: pickedImage.path,
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 30,
+        compressQuality: 50,
       );
 
       if (croppedImage != null) {
@@ -137,13 +136,11 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
 
     try {
       final imageUrls = await _uploadImages();
-
-      final Items = FirebaseFirestore.instance.collection('items');
+      final items = FirebaseFirestore.instance.collection(AppState().isAdmin ? 'itemscollection' : 'temporaryItems');
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid;
 
-      // Allow dateTimeFound to be null if neither date nor time is selected
       DateTime? combinedDateTime;
       if (selectedDate != null || selectedTime != null) {
         combinedDateTime = DateTime(
@@ -155,17 +152,17 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
         );
       }
 
-      await Items.add({
+      await items.add({
         'itemName': itemName,
         'description': description,
         'placeFound': placeFound,
-        'contactInfo': contactInfo,
+        'collectFrom': collectFrom,
         'images': imageUrls,
         'userId': userId,
         'organizationId': 'CMRIT',
         'timestamp': FieldValue.serverTimestamp(),
         'dateTimeFound': combinedDateTime,
-        'Itemtype': 'Found', // Store combined DateTime in Firestore
+        'Itemtype': 'Found',
       });
 
       _clearForm();
@@ -209,6 +206,12 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       });
     }
   }
+
+  bool _containsPhoneNumber(String text) {
+    RegExp phoneNumberRegex = RegExp(r'\d{10}');
+    return phoneNumberRegex.hasMatch(text);
+  }
+
   Future<List<String>> _uploadImages() async {
     final imageUrls = <String>[];
 
@@ -238,8 +241,10 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
       itemName = '';
       description = '';
       placeFound = '';
-      contactInfo = '';
+      collectFrom = '';
       _pickedImages.clear();
+      selectedDate = null;
+      selectedTime = null;
     });
   }
 
@@ -331,7 +336,9 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Item Name'),
+                decoration: InputDecoration(
+                  labelText: 'Item Name *',
+                ),
                 onChanged: (value) {
                   setState(() {
                     itemName = value;
@@ -340,43 +347,63 @@ class _AddFoundItemPageState extends State<AddFoundItemPage> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Item name is required';
+                  } else if (_containsPhoneNumber(value)) {
+                    return 'Phone numbers are not allowed in the item name';
                   }
                   return null;
-                },
-              ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Description'),
-                onChanged: (value) {
-                  setState(() {
-                    description = value;
-                  });
-                },
-              ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Place Found'),
-                onChanged: (value) {
-                  setState(() {
-                    placeFound = value;
-                  });
                 },
               ),
               SizedBox(height: 16.0),
               TextFormField(
                 decoration: InputDecoration(
-                    labelText: 'Contact Info (Mobile No or e.g., Given to AO)'),
+                  labelText: 'Description',
+                ),
                 onChanged: (value) {
                   setState(() {
-                    contactInfo = value;
+                    description = value;
                   });
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Contact information is required';
+                  if (_containsPhoneNumber(value ?? '')) {
+                    return 'Phone numbers are not allowed in the description';
                   }
                   return null;
                 },
+              ),
+              SizedBox(height: 16.0),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Place Found',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    placeFound = value;
+                  });
+                },
+                validator: (value) {
+                  if (_containsPhoneNumber(value ?? '')) {
+                    return 'Phone numbers are not allowed in the place found';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16.0),
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Collect From',
+                ),
+                value: collectFrom,
+                onChanged: (newValue) {
+                  setState(() {
+                    collectFrom = newValue!;
+                  });
+                },
+                items: collectFromOptions.map((String option) {
+                  return DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(option),
+                  );
+                }).toList(),
               ),
               SizedBox(height: 16.0),
               ListTile(

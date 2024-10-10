@@ -6,6 +6,7 @@ import 'package:lostandfound/AddFoundItemPage.dart';
 import 'package:lostandfound/AddLostItemPage.dart';
 import 'package:lostandfound/FoundItemDetailsPage.dart';
 import 'package:lostandfound/LostItemDetailsPage.dart';
+import 'package:lostandfound/app_state.dart';
 import 'package:simple_speed_dial/simple_speed_dial.dart';
 
 class UserProfilePage extends StatelessWidget {
@@ -92,7 +93,7 @@ class UserProfilePage extends StatelessWidget {
                 ),
                 StreamBuilder(
                   stream: FirebaseFirestore.instance
-                      .collection('items')
+                      .collection('itemscollection')
                       .where('userId', isEqualTo: user.uid)
                       .snapshots(),
                   builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -126,9 +127,9 @@ class UserProfilePage extends StatelessWidget {
                               MaterialPageRoute(
                                 builder: (context) {
                                   if (item['Itemtype'] == 'Found') {
-                                    return FoundItemDetailsPage(item: item);
+                                    return FoundItemDetailsPage(item: item, isAdmin: AppState().isAdmin,);
                                   } else {
-                                    return LostItemDetailsPage(item: item);
+                                    return LostItemDetailsPage(item: item, isAdmin: AppState().isAdmin,);
                                   }
                                 },
                               ),

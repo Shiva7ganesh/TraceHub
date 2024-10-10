@@ -1,4 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
+import 'package:lostandfound/AdminApprovalTab.dart';
+import 'package:lostandfound/app_state.dart';
 import 'founditemspage.dart'; // Import FoundItemsPage widget here
 import 'lostitemspage.dart'; // Import LostItemsPage widget here
 import 'UserProfilePage.dart'; // Import UserProfilePage widget here
@@ -31,12 +35,44 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
+  bool isAdmin = false;
+  List<String> _adminEmails = [];
 
-  static final List<Widget> _widgetOptions = <Widget>[
-    LostItemsPage(), // Use LostItemsPage widget
-    FoundItemsPage(), // Use FoundItemsPage widget
-    UserProfilePage(), // Use UserProfilePage widget
+  List<Widget> _widgetOptions() => <Widget>[
+    LostItemsPage(),
+    FoundItemsPage(),
+    AppState().isAdmin ? AdminApprovalTab() : UserProfilePage()
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminStatus();
+  }
+
+  Future<void> _fetchAdminEmails() async {
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    await remoteConfig.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      minimumFetchInterval: const Duration(minutes: 1),
+    ));
+    await remoteConfig.fetchAndActivate();
+    String adminEmailsString = remoteConfig.getString('admin_emails');
+    _adminEmails = adminEmailsString.split(',').map((email) => email.trim()).toList();
+  }
+
+  Future<void> _checkAdminStatus() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _fetchAdminEmails();
+      setState(() {
+        isAdmin = _adminEmails.contains(user.email);
+      });
+      if (isAdmin) {
+        AppState().isAdmin = true;
+      }
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -51,20 +87,20 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text('Trace Hub'),
         automaticallyImplyLeading: false,
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: _widgetOptions().elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
+        items: <BottomNavigationBarItem>[
+          const BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: 'Lost Items',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.favorite),
             label: 'Found Items',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person),
+            label: AppState().isAdmin ? 'Approvals' : 'Profile',
           ),
         ],
         currentIndex: _selectedIndex,

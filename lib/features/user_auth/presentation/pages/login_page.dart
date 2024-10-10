@@ -6,6 +6,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:lostandfound/app_state.dart'; // Import the AppState
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key});
@@ -23,6 +25,24 @@ class _LoginPageState extends State<LoginPage> {
   String? _selectedOrganization;
   bool _organizationDropdownError = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchAdminEmails();
+  }
+
+  List<String> _adminEmails = [];
+
+  Future<void> _fetchAdminEmails() async {
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    await remoteConfig.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      minimumFetchInterval: const Duration(minutes: 1),
+    ));
+    await remoteConfig.fetchAndActivate();
+    String adminEmailsString = remoteConfig.getString('admin_emails');
+    _adminEmails = adminEmailsString.split(',').map((email) => email.trim()).toList();
+  }
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -254,16 +274,22 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     if (userCredential != null) {
-      if (!userCredential.user!.emailVerified) {
+      if (_adminEmails.contains(userCredential.user!.email)) {
+        // User is an admin, bypass email verification
+        AppState().isAdmin = true; // Update the global state
+        showToast(message: "Admin user is successfully signed in");
+        _showPolicyDialog(); // Show the policy dialog before navigating to home
+      } else if (!userCredential.user!.emailVerified) {
         setState(() {
           _isSigning = false;
         });
         showToast(message: "Please verify your email before logging in.");
         return;
+      } else {
+        AppState().isAdmin = false; // Update the global state
+        showToast(message: "User is successfully signed in");
+        _showPolicyDialog(); // Show the policy dialog before navigating to home
       }
-
-      showToast(message: "User is successfully signed in");
-      _showPolicyDialog(); // Show the policy dialog before navigating to home
     } else {
       setState(() {
         _isSigning = false;
@@ -305,16 +331,24 @@ class _LoginPageState extends State<LoginPage> {
         final String? email = userCredential.user!.email;
         final String? userId = userCredential.user!.uid;
         final String? username = userCredential.user!.displayName;
+        if (_adminEmails.contains(email)) {
+          // User is an admin, bypass email verification
+          AppState().isAdmin = true; // Update the global state
+        } else {
+          AppState().isAdmin = false; // Update the global state
+        }
 
         if (email != null &&
             (email.endsWith('@cmrithyderabad.edu.in') ||
-                email.endsWith('@cmrithyderabad.ac.in'))) {
+                email.endsWith('@cmritonline.ac.in') || AppState().isAdmin==true)) {
+
+
           // Store user data in Firestore
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'email': email,
             'username': username,
             'organization': _selectedOrganization,
-            // Add other fields as needed
+            'isAdmin': AppState().isAdmin,
           });
 
           _showPolicyDialog(); // Show the policy dialog before navigating to home
@@ -339,7 +373,6 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
-
   void _resetPassword() async {
     String email = _emailController.text.trim();
 
@@ -377,18 +410,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'We would like to inform all members that TraceHub is not responsible for any personal belongings or issues encountered with other members of the community.',
-                    textAlign: TextAlign.justify,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      height: 1.5,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'If you come across any valuable items, such as electronics or jewelry, please ensure they are handed over to the faculty or the Administrative Office (AO). Under no circumstances should these items be given directly to any individual without proper verification.',
-                    textAlign: TextAlign.justify,
+                    'In accordance with the college policies and guidelines, direct communication between users is not permitted. All interactions should be mediated by AO(Administrative Officer). Additionally, users are prohibited from posting any inappropriate content. Violations of these rules will result in the user being blocked from the app and appropriate disciplinary actions will be taken.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black87,

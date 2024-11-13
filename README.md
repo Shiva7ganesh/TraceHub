@@ -84,11 +84,3 @@ Contributions are welcome! If you'd like to contribute to TraceHub, please fork 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-
-### Notes:
-- Replace the Play Store link with the actual URL of your app once it's published.
-- Replace the YouTube link with the actual demo video URL.
-- Add any additional screenshots as necessary.
-
-This version includes the Play Store download link to make it easier for users to access the app directly from your GitHub repository.
